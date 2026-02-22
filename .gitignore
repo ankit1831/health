@@ -4,3 +4,7 @@ release_validate_patients
 stem_mapping_template.csv
 tiny_train_sample.csv
 translated_train_data.csv
+
+.env
+\heal_bridge_best_model.pt
+translated_train_data.zip

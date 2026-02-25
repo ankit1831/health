@@ -7,6 +7,70 @@ import json
 import re
 import time
 from dotenv import load_dotenv
+import google.generativeai as genai
+import os
+
+# 1. Configure Gemini (Assuming load_dotenv() is already called at the top of your app)
+gemini_key = os.getenv("GEMINI_API_KEY")
+if gemini_key:
+    genai.configure(api_key=gemini_key)
+
+# 2. The Triage Safety Net (Clinical Severity Mapping)
+TRIAGE_SEVERITY = {
+    'Anaphylaxis': 'RED', 'Acute pulmonary edema': 'RED', 'Boerhaave': 'RED', 
+    'Ebola': 'RED', 'Epiglottitis': 'RED', 'Possible NSTEMI / STEMI': 'RED', 
+    'Pulmonary embolism': 'RED', 'Spontaneous pneumothorax': 'RED', 
+    'Unstable angina': 'RED', 'Larygospasm': 'RED', 'Myocarditis': 'RED', 
+    'Guillain-Barré syndrome': 'RED', 'PSVT': 'RED', 
+    'Bronchospasm / acute asthma exacerbation': 'RED',
+    'Acute COPD exacerbation / infection': 'YELLOW', 'Acute dystonic reactions': 'YELLOW', 
+    'Atrial fibrillation': 'YELLOW', 'Bronchiectasis': 'YELLOW', 'Bronchiolitis': 'YELLOW', 
+    'Chagas': 'YELLOW', 'Croup': 'YELLOW', 'HIV (initial infection)': 'YELLOW', 
+    'Inguinal hernia': 'YELLOW', 'Myasthenia gravis': 'YELLOW', 'Pancreatic neoplasm': 'YELLOW', 
+    'Pericarditis': 'YELLOW', 'Pneumonia': 'YELLOW', 'Pulmonary neoplasm': 'YELLOW', 
+    'SLE': 'YELLOW', 'Sarcoidosis': 'YELLOW', 'Spontaneous rib fracture': 'YELLOW', 
+    'Stable angina': 'YELLOW', 'Tuberculosis': 'YELLOW', 'Whooping cough': 'YELLOW', 
+    'Scombroid food poisoning': 'YELLOW', 'Anemia': 'YELLOW', 'Cluster headache': 'YELLOW',
+    'Acute laryngitis': 'GREEN', 'Acute otitis media': 'GREEN', 'Acute rhinosinusitis': 'GREEN', 
+    'Allergic sinusitis': 'GREEN', 'Bronchitis': 'GREEN', 'Chronic rhinosinusitis': 'GREEN', 
+    'GERD': 'GREEN', 'Influenza': 'GREEN', 'Localized edema': 'GREEN', 
+    'Panic attack': 'GREEN', 'URTI': 'GREEN', 'Viral pharyngitis': 'GREEN'
+}
+
+# 3. The Safety Override Logic
+def evaluate_clinical_severity(top_3_diseases):
+    severities = [TRIAGE_SEVERITY.get(disease, "YELLOW") for disease in top_3_diseases]
+    if "RED" in severities:
+        return "RED", "[SYSTEM ALERT: CRITICAL EMERGENCY. Instruct the patient to go to the nearest Emergency Room or call an ambulance immediately. DO NOT suggest home remedies. Keep the tone urgent but calm.]"
+    elif "YELLOW" in severities:
+        return "YELLOW", "[SYSTEM ALERT: URGENT CONDITION. Instruct the patient to schedule an appointment with a doctor soon. Provide safe, temporary symptom management but emphasize medical evaluation.]"
+    else:
+        return "GREEN", "[SYSTEM ALERT: MINOR CONDITION. Reassure the patient. Provide safe, over-the-counter home care management and lifestyle adjustments.]"
+
+def generate_cmo_prompt(top_3_diseases, system_alert):
+    top_disease = top_3_diseases[0]
+    prompt = f"""You are the Chief Medical Officer, a highly empathetic, professional, and expert clinical AI assistant.
+The PyTorch Triage Engine has analyzed the patient's symptoms. The top suspected conditions are: {', '.join(top_3_diseases)}. The primary focus is: {top_disease}.
+
+🚨 CRITICAL SAFETY OVERRIDE:
+{system_alert}
+
+YOUR BEHAVIORAL RULES:
+1. THE TONE: Speak directly to the patient with deep empathy and a warm, clinical bedside manner. 
+2. NO MATH: DO NOT show the patient the raw list of diseases or any percentages. 
+3. PLAIN ENGLISH: Explain what {top_disease} is in very simple, non-medical terms.
+4. NO PRESCRIPTIONS: NEVER recommend specific drug dosages or brand-name medications. 
+5. THE HANDOFF: Strictly follow the CRITICAL SAFETY OVERRIDE.
+6. BE CONCISE (CRITICAL): The patient is unwell and tired. Keep your paragraphs extremely short (1-2 sentences maximum). Do not write long preambles.
+7. SCANNABILITY: If providing steps or advice, use a MAXIMUM of 3 to 4 short bullet points. Bold the key words so it is easy to read.
+8. THE CONVERSATION LOOP: End your message by asking if they have more questions, but VARY your phrasing naturally. Do not repeat the exact same sentence every time.
+⚠️ SYMPTOM ESCALATION PROTOCOL (CRITICAL RULE) ⚠️
+You are ONLY authorized to discuss {top_disease}. 
+If the patient mentions ANY NEW SYMPTOMS during this chat that were not part of their original complaint (especially severe symptoms like spreading redness, chest pain, difficulty breathing, or high fever), YOU MUST IMMEDIATELY STOP giving home care advice.
+You must say exactly this: "You are describing new symptoms that change your clinical picture. I cannot safely advise on this condition anymore. Please refresh the page to restart the Triage Assessment with these new symptoms, or seek immediate in-person medical care."
+
+"""
+    return prompt
 
 # 1. Load Environment Variables
 load_dotenv()
@@ -86,7 +150,7 @@ triage_tool = {
                 "negative_symptoms": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Symptoms the user explicitly denied (said NO to). If none, use an empty array []."
+                    "description": "Symptoms the user explicitly denied (said NO to). If none, use an empty array [].DO NOT list unasked symptoms. Maximum 5 items."
                 }
             },
             # Notice we removed "age" and "sex" from this list!
@@ -342,11 +406,32 @@ if not st.session_state.triage_complete:
                                         probs = torch.sigmoid(outputs.logits)[0]
                                     top_k_probs, top_k_indices = torch.topk(probs, 3)
                                     
-                                    report = f"### 🩺 Diagnostic Predictions:\n**Synthesized Data:**\n> *{synthetic_text}*\n\n"
-                                    for i in range(3): report += f"**{i+1}. {DISEASES[top_k_indices[i].item()]}** ({top_k_probs[i].item()*100:.2f}%)\n"
+                                    # ✅ PASTE THIS PHASE 5 BLOCK ✅
+                                        # 1. Extract exact disease names into a list for Gemini
+                                    top_3_predictions = [DISEASES[top_k_indices[i].item()] for i in range(3)]
                                     
-                                st.session_state.messages.append({"role": "assistant", "content": report})
-                                st.rerun()
+                                    if "cmo_chat" not in st.session_state:
+                                        # 2. Evaluate the safety (Red/Yellow/Green)
+                                        severity, alert = evaluate_clinical_severity(top_3_predictions)
+                                        
+                                        # 3. Build the Gemini Model
+                                        cmo_model = genai.GenerativeModel(
+                                            model_name="gemini-2.5-flash", 
+                                            system_instruction=generate_cmo_prompt(top_3_predictions, alert)
+                                        )
+                                        
+                                        # 4. Start the chat and lock it in Streamlit's memory
+                                        st.session_state.cmo_chat = cmo_model.start_chat(history=[])
+                                        
+                                        # 5. Generate the very first Final Report automatically
+                                        initial_response = st.session_state.cmo_chat.send_message("Please give me my triage results.")
+                                        
+                                        # 6. Create a NEW list to store the CMO chat history for the UI
+                                        st.session_state.cmo_messages = [{"role": "assistant", "content": initial_response.text}]
+                                        
+                                        # 7. Change the app's state to move to the final Q&A screen
+                                        st.session_state.current_phase = "CMO_QA" 
+                                        st.rerun()
                                 
                         # --- NORMAL CHAT BEHAVIOR ---
                         else:
@@ -356,3 +441,59 @@ if not st.session_state.triage_complete:
                             
                     except Exception as e:
                         st.error(f"API Error: {e}")
+
+# --- PHASE 5 UI: THE CHIEF MEDICAL OFFICER Q&A ---
+
+# This only triggers after PyTorch is done and the state changes
+if st.session_state.get("triage_complete") and st.session_state.get("current_phase") == "CMO_QA":
+    
+    st.success("Triage Assessment Complete. Transferring to the Chief Medical Officer...")
+    
+    # 1. Draw the CMO Conversation History
+    for msg in st.session_state.cmo_messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+            
+    # 2. DYNAMIC ACTION CHIPS (Suggested Questions)
+    # Only show these if the AI just spoke, so they disappear while typing/loading
+    if st.session_state.cmo_messages[-1]["role"] == "assistant":
+        st.write("💡 **Suggested Questions:**")
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if st.button("💊 What are my treatment options?", use_container_width=True):
+                st.session_state.chip_trigger = "What are my treatment options?"
+                st.rerun()
+        with col2:
+            if st.button("🍲 What foods should I eat or avoid?", use_container_width=True):
+                st.session_state.chip_trigger = "What foods should I eat or avoid?"
+                st.rerun()
+        with col3:
+            if st.button("⚠️ Is this condition dangerous?", use_container_width=True):
+                st.session_state.chip_trigger = "Is this condition dangerous?"
+                st.rerun()
+
+    # 3. The New Follow-Up Chat Box
+    cmo_input = st.chat_input("Ask a follow-up question about your results...")
+    
+    # Check if a button was clicked OR if the user typed something manually
+    if st.session_state.get("chip_trigger"):
+        cmo_input = st.session_state.chip_trigger
+        del st.session_state.chip_trigger  # Clear the trigger so it doesn't loop forever
+        
+    if cmo_input:
+        # Append and display the user's question
+        st.session_state.cmo_messages.append({"role": "user", "content": cmo_input})
+        with st.chat_message("user"):
+            st.markdown(cmo_input)
+            
+        # Get Gemini's response contextually
+        with st.chat_message("assistant"):
+            with st.spinner("The Chief Medical Officer is typing..."):
+                try:
+                    cmo_response = st.session_state.cmo_chat.send_message(cmo_input)
+                    st.markdown(cmo_response.text)
+                    st.session_state.cmo_messages.append({"role": "assistant", "content": cmo_response.text})
+                    st.rerun() # Rerun to refresh the action chips!
+                except Exception as e:
+                    st.error(f"CMO Connection Error: {e}")

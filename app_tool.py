@@ -9,6 +9,8 @@ import time
 from dotenv import load_dotenv
 import google.generativeai as genai
 import os
+from cerebras.cloud.sdk import Cerebras
+import os
 
 # 1. Configure Gemini (Assuming load_dotenv() is already called at the top of your app)
 gemini_key = os.getenv("GEMINI_API_KEY")
@@ -38,37 +40,44 @@ TRIAGE_SEVERITY = {
 }
 
 # 3. The Safety Override Logic
+# 3. The Safety Override Logic (UPDATED: Top-1 Focus)
 def evaluate_clinical_severity(top_3_diseases):
-    severities = [TRIAGE_SEVERITY.get(disease, "YELLOW") for disease in top_3_diseases]
-    if "RED" in severities:
+    # THE FIX: Only look at the #1 most likely disease to prevent false alarms
+    primary_disease = top_3_diseases[0]
+    severity = TRIAGE_SEVERITY.get(primary_disease, "YELLOW")
+    
+    if severity == "RED":
         return "RED", "[SYSTEM ALERT: CRITICAL EMERGENCY. Instruct the patient to go to the nearest Emergency Room or call an ambulance immediately. DO NOT suggest home remedies. Keep the tone urgent but calm.]"
-    elif "YELLOW" in severities:
+    elif severity == "YELLOW":
         return "YELLOW", "[SYSTEM ALERT: URGENT CONDITION. Instruct the patient to schedule an appointment with a doctor soon. Provide safe, temporary symptom management but emphasize medical evaluation.]"
     else:
         return "GREEN", "[SYSTEM ALERT: MINOR CONDITION. Reassure the patient. Provide safe, over-the-counter home care management and lifestyle adjustments.]"
-
-def generate_cmo_prompt(top_3_diseases, system_alert):
+def generate_cmo_prompt(top_3_diseases, system_alert, patient_text):
     top_disease = top_3_diseases[0]
     prompt = f"""You are the Chief Medical Officer, a highly empathetic, professional, and expert clinical AI assistant.
-The PyTorch Triage Engine has analyzed the patient's symptoms. The top suspected conditions are: {', '.join(top_3_diseases)}. The primary focus is: {top_disease}.
+The PyTorch Triage Engine has analyzed the patient.
+
+PATIENT'S ACTUAL COMPLAINT:
+"{patient_text}"
+
+THE ENGINE'S PREDICTION:
+Top suspected conditions: {', '.join(top_3_diseases)}. 
+Primary focus: {top_disease}.
 
 🚨 CRITICAL SAFETY OVERRIDE:
 {system_alert}
 
 YOUR BEHAVIORAL RULES:
 1. THE TONE: Speak directly to the patient with deep empathy and a warm, clinical bedside manner. 
-2. NO MATH: DO NOT show the patient the raw list of diseases or any percentages. 
-3. PLAIN ENGLISH: Explain what {top_disease} is in very simple, non-medical terms.
-4. NO PRESCRIPTIONS: NEVER recommend specific drug dosages or brand-name medications. 
-5. THE HANDOFF: Strictly follow the CRITICAL SAFETY OVERRIDE.
-6. BE CONCISE (CRITICAL): The patient is unwell and tired. Keep your paragraphs extremely short (1-2 sentences maximum). Do not write long preambles.
-7. SCANNABILITY: If providing steps or advice, use a MAXIMUM of 3 to 4 short bullet points. Bold the key words so it is easy to read.
-8. THE CONVERSATION LOOP: End your message by asking if they have more questions, but VARY your phrasing naturally. Do not repeat the exact same sentence every time.
-⚠️ SYMPTOM ESCALATION PROTOCOL (CRITICAL RULE) ⚠️
-You are ONLY authorized to discuss {top_disease}. 
-If the patient mentions ANY NEW SYMPTOMS during this chat that were not part of their original complaint (especially severe symptoms like spreading redness, chest pain, difficulty breathing, or high fever), YOU MUST IMMEDIATELY STOP giving home care advice.
-You must say exactly this: "You are describing new symptoms that change your clinical picture. I cannot safely advise on this condition anymore. Please refresh the page to restart the Triage Assessment with these new symptoms, or seek immediate in-person medical care."
+2. THE SANITY CHECK (CRITICAL): You are the Senior Doctor. PyTorch is just a math engine. Look at the PATIENT'S ACTUAL COMPLAINT. If they are describing a very basic, generic symptom (like just a headache or a mild fever), but PyTorch predicted a severe or rare disease, YOU MUST OVERRIDE PyTorch. Do not mention the scary disease. Calmly explain that they seem to have a common symptom and give safe home care advice.
+3. NO MATH: DO NOT show the patient the raw list of diseases or any percentages. 
+4. PLAIN ENGLISH: Explain the condition in very simple, non-medical terms.
+5. NO PRESCRIPTIONS: NEVER recommend specific drug dosages or brand-name medications. 
+6. THE HANDOFF: Strictly follow the CRITICAL SAFETY OVERRIDE. 
+7. THE LOOP: End your message by asking the patient: "Do you have any questions about this condition or what to do next?"
 
+⚠️ SYMPTOM ESCALATION PROTOCOL ⚠️
+If the patient mentions ANY NEW SYMPTOMS during this chat that were not part of their original complaint (especially severe symptoms like chest pain or difficulty breathing), stop giving advice and tell them to seek immediate emergency care.
 """
     return prompt
 
@@ -106,22 +115,23 @@ def load_ddxplus_vocabulary():
 
 symptoms_list = load_ddxplus_vocabulary()
 
-# --- THE CLEAN BEHAVIORAL PROMPT ---
-# --- THE IRONCLAD BEHAVIORAL PROMPT ---
-# --- THE IRONCLAD BEHAVIORAL PROMPT ---
 # --- THE IRONCLAD BEHAVIORAL PROMPT ---
 SYSTEM_PROMPT = f"""
-You are an elite Clinical Triage Diagnostician. 
+You are an elite Clinical Triage Diagnostician and Medical Translator. 
 
 YOUR BEHAVIOR (STRICT RULES):
 1. ONE QUESTION MAXIMUM: You must NEVER ask more than one question in a single message.
 2. DYNAMIC QUESTIONING: Based on the chief complaint, ask targeted questions from this allowed vocabulary list: {', '.join(symptoms_list[:80])}
 3. KEEP ASKING: Keep asking questions one by one. Do not stop until the user explicitly says "stop" or "predict now".
 
-DATA EXTRACTION RULES (WHEN CALLING THE TOOL):
-- If the user answered YES to a symptom, put the exact symptom string in the `positive_symptoms` array.
-- If the user answered NO to a symptom, put the exact symptom string in the `negative_symptoms` array.
-- NEVER write negative statements (e.g., "no pain") in the positive array. Just put "pain" in the negative array.
+DATA EXTRACTION RULES (WHEN CALLING THE TOOL - CRITICAL):
+1. THE TRANSLATION RULE: You MUST translate the user's casual words into the EXACT matching terms from the allowed vocabulary list. 
+   - Example: If they say "pain in head" or "my head hurts", you must output the exact vocabulary word (e.g., "headache").
+   - Example: If they say "tummy ache", output "abdominal pain".
+   - DO NOT just copy/paste their slang. Find the closest exact clinical match from the vocabulary list.
+2. POSITIVE SYMPTOMS: List the EXACT vocabulary terms the user confirmed.
+3. NEGATIVE SYMPTOMS: List the EXACT vocabulary terms the user explicitly denied. 
+4. THE CONTRADICTION RULE: If a user initially denied a symptom but later confirmed it (e.g., said "no" to general pain, but later said "my head hurts"), the positive confirmation OVERRIDES the negative. Put it ONLY in the positive array.
 """
 # --- DEFINE THE PYTHON TOOL FOR GROQ (WITH ENUMS) ---
 # --- DEFINE THE PYTHON TOOL FOR GROQ (SOFT CONSTRAINTS) ---
@@ -150,7 +160,7 @@ triage_tool = {
                 "negative_symptoms": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Symptoms the user explicitly denied (said NO to). If none, use an empty array [].DO NOT list unasked symptoms. Maximum 5 items."
+                    "description": "Symptoms the user explicitly denied (said NO to). If none, use an empty array []."
                 }
             },
             # Notice we removed "age" and "sex" from this list!
@@ -188,8 +198,9 @@ def load_ai_engine():
     return tokenizer, model, device
 
 # --- INITIALIZE SESSION ---
-if "groq_client" not in st.session_state:
-    st.session_state.groq_client = Groq()
+if "cerebras_client" not in st.session_state:
+    cerebras_key = os.getenv("CEREBRAS_API_KEY")
+    st.session_state.cerebras_client = Cerebras(api_key=cerebras_key)
 
 if "messages" not in st.session_state:
     st.session_state.messages = [
@@ -213,9 +224,17 @@ if "force_predict" not in st.session_state:
 
 with st.sidebar:
     st.markdown("### Patient Controls")
-    if st.button("🩺 Generate Diagnosis Now", use_container_width=True):
-        st.session_state.force_predict = True
+    
+    # 1. The Escape Hatch: Let the user restart the app anytime
+    if st.button("🔄 Start New Assessment", type="primary", use_container_width=True):
+        st.session_state.clear()
         st.rerun()
+        
+    # 2. Hide the Diagnosis button if we are already in Phase 5
+    if not st.session_state.get("triage_complete"):
+        if st.button("🩺 Generate Diagnosis Now", use_container_width=True):
+            st.session_state.force_predict = True
+            st.rerun()
 
 
 for message in st.session_state.messages:
@@ -318,10 +337,8 @@ if not st.session_state.triage_complete:
                             
                             api_args = {
                                 "messages": [{"role": "system", "content": dynamic_system_prompt}] + st.session_state.messages,
-                                "model": "llama-3.1-8b-instant", #llama-3.3-70b-versatile
-                                "temperature": 0.2,
-                                "tools": [demographics_tool],
-                                "tool_choice": "auto"
+                                "model": "llama-3.3-70b", 
+                                "temperature": 0.0,
                             }
                         
                         # 3. THE TRIAGE NURSE (We have the data, or we forced the defaults)
@@ -330,9 +347,8 @@ if not st.session_state.triage_complete:
                             dynamic_system_prompt = SYSTEM_PROMPT 
                             
                             api_args = {
-                                # Change [1:] to just st.session_state.messages here too!
                                 "messages": [{"role": "system", "content": dynamic_system_prompt}] + st.session_state.messages,
-                                "model": "llama-3.1-8b-instant",#llama-3.1-8b-instant
+                                "model": "llama-3.3-70b", 
                                 "temperature": 0.0,
                             }
                             
@@ -349,7 +365,7 @@ if not st.session_state.triage_complete:
                         max_retries = 3
                         for attempt in range(max_retries):
                             try:
-                                chat_completion = st.session_state.groq_client.chat.completions.create(**api_args)
+                                chat_completion = st.session_state.cerebras_client.chat.completions.create(**api_args)
                                 response_message = chat_completion.choices[0].message
                                 break  # If successful, break out of the retry loop immediately
                             except Exception as e:
@@ -406,30 +422,38 @@ if not st.session_state.triage_complete:
                                         probs = torch.sigmoid(outputs.logits)[0]
                                     top_k_probs, top_k_indices = torch.topk(probs, 3)
                                     
-                                    # ✅ PASTE THIS PHASE 5 BLOCK ✅
-                                        # 1. Extract exact disease names into a list for Gemini
-                                    top_3_predictions = [DISEASES[top_k_indices[i].item()] for i in range(3)]
+                                    # ✅ THE MATH BYPASS (Generic Symptom Catcher) ✅
+                                    highest_confidence = top_k_probs[0].item()
                                     
                                     if "cmo_chat" not in st.session_state:
-                                        # 2. Evaluate the safety (Red/Yellow/Green)
-                                        severity, alert = evaluate_clinical_severity(top_3_predictions)
                                         
-                                        # 3. Build the Gemini Model
+                                        # If the math is very weak (< 30%), skip the 49 diseases entirely
+                                        if highest_confidence < 0.30:
+                                            top_3_predictions = [cc_clean.title(), "N/A", "N/A"]
+                                            severity = "GREEN"
+                                            alert = f"[SYSTEM ALERT: The patient has a generic, isolated symptom ({cc_clean}). DO NOT diagnose them with a severe disease. Provide general, safe home remedies for {cc_clean}.]"
+                                        
+                                        # Otherwise, trust the math and proceed normally
+                                        else:
+                                            top_3_predictions = [DISEASES[top_k_indices[i].item()] for i in range(3)]
+                                            severity, alert = evaluate_clinical_severity(top_3_predictions)
+                                        
+                                        # ✅ Pass the synthetic_text to Gemini here!
                                         cmo_model = genai.GenerativeModel(
                                             model_name="gemini-2.5-flash", 
-                                            system_instruction=generate_cmo_prompt(top_3_predictions, alert)
+                                            system_instruction=generate_cmo_prompt(top_3_predictions, alert, synthetic_text)
                                         )
                                         
-                                        # 4. Start the chat and lock it in Streamlit's memory
+                                        # Start the chat and lock it in Streamlit's memory
                                         st.session_state.cmo_chat = cmo_model.start_chat(history=[])
                                         
-                                        # 5. Generate the very first Final Report automatically
+                                        # Generate the very first Final Report automatically
                                         initial_response = st.session_state.cmo_chat.send_message("Please give me my triage results.")
                                         
-                                        # 6. Create a NEW list to store the CMO chat history for the UI
+                                        # Create a NEW list to store the CMO chat history for the UI
                                         st.session_state.cmo_messages = [{"role": "assistant", "content": initial_response.text}]
                                         
-                                        # 7. Change the app's state to move to the final Q&A screen
+                                        # Change the app's state to move to the final Q&A screen
                                         st.session_state.current_phase = "CMO_QA" 
                                         st.rerun()
                                 

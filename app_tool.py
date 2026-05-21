@@ -337,7 +337,7 @@ if not st.session_state.triage_complete:
                             
                             api_args = {
                                 "messages": [{"role": "system", "content": dynamic_system_prompt}] + st.session_state.messages,
-                                "model": "llama-3.3-70b", 
+                                "model": "gpt-oss-120b", 
                                 "temperature": 0.0,
                             }
                         
@@ -348,7 +348,7 @@ if not st.session_state.triage_complete:
                             
                             api_args = {
                                 "messages": [{"role": "system", "content": dynamic_system_prompt}] + st.session_state.messages,
-                                "model": "llama-3.3-70b", 
+                                "model": "gpt-oss-120b", 
                                 "temperature": 0.0,
                             }
                             

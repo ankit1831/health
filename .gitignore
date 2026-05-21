@@ -8,3 +8,4 @@ translated_train_data.csv
 .env
 \heal_bridge_best_model.pt
 translated_train_data.zip
+vectorized_train_data.csv

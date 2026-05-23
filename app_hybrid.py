@@ -1,4 +1,8 @@
+import os
+os.environ["USE_TF"] = "0"
+os.environ["USE_TORCH"] = "1"
 import streamlit as st
+import time
 import numpy as np
 import json
 import joblib
@@ -8,11 +12,23 @@ import time
 from groq import Groq
 from dotenv import load_dotenv
 import google.generativeai as genai
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# --- 1. SETUP & CONFIGURATION ---
+# FIX: We MUST load the .env file BEFORE we try to configure the APIs!
+load_dotenv()
 
 # --- GEMINI CONFIGURATION & CMO PROMPTS ---
 gemini_key = os.getenv("GEMINI_API_KEY")
 if gemini_key:
     genai.configure(api_key=gemini_key)
+else:
+    # Adding a safety net so the app tells you if your .env file is broken
+    st.error("FATAL ERROR: GEMINI_API_KEY is missing from your .env file!")
+    st.stop()
+
+
 
 TRIAGE_SEVERITY = {
     'Anaphylaxis': 'RED', 'Acute pulmonary edema': 'RED', 'Boerhaave': 'RED', 
@@ -65,6 +81,9 @@ st.set_page_config(page_title="Heal Bridge AI Triage", page_icon="🩺", layout=
 client = Groq()
 
 # --- 2. ASSET LOADING (Replacing PyTorch with Naive Bayes Assets) ---
+# --- 2. ASSET LOADING & SEMANTIC EMBEDDINGS ---
+# --- 2. ASSET LOADING & LOCAL SEMANTIC EMBEDDINGS ---
+# --- 2. ASSET LOADING (ENTERPRISE 3.0 HYBRID DATA) ---
 @st.cache_resource
 def load_assets():
     model = joblib.load('heal_bridge_bnb_model.joblib')
@@ -75,15 +94,49 @@ def load_assets():
     with open('release_evidences.json', 'r', encoding='utf-8') as f:
         evidences = json.load(f)
         
-    # Build the vocabulary list for the LLM Prompt (exactly like your load_ddxplus_vocabulary function)
+    # NEW: Load the pure clinical keywords
+    with open('clinical_keywords.json', 'r', encoding='utf-8') as f:
+        clinical_dict = json.load(f)
+        
     vocab_list = []
     for key, value in evidences.items():
         question = value.get("question_en", "")
         if question: vocab_list.append(question)
+        
+    corpus_text = []
+    code_map = []
+    raw_text_map = [] # We keep the original questions just for human-readable debug logs
+    
+    for col in master_cols:
+        if col in ['AGE', 'SEX'] or col.startswith('AGE_'): continue
+        
+        # We embed the PURE CLINICAL KEYWORDS, not the questions
+        clean_text = clinical_dict.get(col, "")
+        corpus_text.append(clean_text)
+        code_map.append(col)
+        
+        # Keep the original question for the debug UI
+        if '_@_' in col:
+            base_code, val_code = col.split('_@_')
+            base_q = evidences.get(base_code, {}).get('question_en', '')
+            val_mean = evidences.get(base_code, {}).get('value_meaning', {}).get(val_code, {}).get('en', '')
+            raw_text_map.append(f"{base_q} -> {val_mean}")
+        else:
+            raw_text_map.append(evidences.get(col, {}).get('question_en', col))
             
-    return model, encoder, master_cols, evidences, vocab_list
+    print("Loading CLINICAL Semantic Model (PubMedBERT)...")
+    embedder = SentenceTransformer('pritamdeka/S-PubMedBert-MS-MARCO')
+    corpus_embeddings = embedder.encode(corpus_text)
+    
+    print("Building BM25 Lexical Index...")
+    from rank_bm25 import BM25Okapi
+    tokenized_corpus = [doc.lower().split() for doc in corpus_text]
+    bm25 = BM25Okapi(tokenized_corpus)
+            
+    return model, encoder, master_cols, evidences, vocab_list, corpus_text, code_map, corpus_embeddings, embedder, bm25, raw_text_map
 
-bnb_model, label_encoder, master_columns, evidences, symptoms_list = load_assets()
+# Load everything into memory
+bnb_model, label_encoder, master_columns, evidences, symptoms_list, corpus_text, code_map, corpus_embeddings, embedder, bm25, raw_text_map = load_assets()
 # --- THE MATH ENGINE COMPONENTS ---
 class PatientTracker:
     def __init__(self, age, sex_is_male):
@@ -106,19 +159,8 @@ class PatientTracker:
             if code in self.columns:
                 self.state[0, self.columns.index(code)] = value
 
-def calculate_true_confidence(tracker_state, model):
-    log_probs = model.class_log_prior_.copy()
-    log_prob_1 = model.feature_log_prob_
-    prob_1 = np.exp(log_prob_1)
-    log_prob_0 = np.log(np.clip(1.0 - prob_1, 1e-10, 1.0)) 
+
     
-    for idx, val in enumerate(tracker_state[0]):
-        if val == 1: log_probs += log_prob_1[:, idx]
-        elif val == 0: log_probs += log_prob_0[:, idx]
-            
-    log_probs_shifted = log_probs - np.max(log_probs)
-    probs = np.exp(log_probs_shifted)
-    return probs / np.sum(probs)
 # --- 3. SESSION STATE INITIALIZATION (Exactly from your code) ---
 if "messages" not in st.session_state:
     st.session_state.messages = [
@@ -229,91 +271,119 @@ if not st.session_state.triage_complete:
                     if is_bailout:
                         with st.spinner("Compiling medical history and running diagnostic math..."):
                             
-                            # 1. Compile the chat history into a single transcript
                             transcript = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages if m['role'] != 'system'])
-                            transcript_lower = transcript.lower()
                             
-                            # --- THE SEMANTIC FILTER (Helps Gemini Focus) ---
-                            core_dict_full = {}
-                            for col in master_columns:
-                                if col in ['AGE', 'SEX'] or col.startswith('AGE_'): continue
-                                if '_@_' in col:
-                                    base_code, val_code = col.split('_@_')
-                                    base_q = evidences.get(base_code, {}).get('question_en', '')
-                                    val_mean = evidences.get(base_code, {}).get('value_meaning', {}).get(val_code, {}).get('en', '')
-                                    core_dict_full[col] = f"{base_q} -> {val_mean}"
-                                else:
-                                    core_dict_full[col] = evidences.get(col, {}).get('question_en', col)
-                                    
-                            core_dict = {}
-                            for code, text in core_dict_full.items():
-                                dict_words = set(re.findall(r'\b[a-z]{4,}\b', text.lower()))
-                                if any(w in transcript_lower for w in dict_words):
-                                    core_dict[code] = text
-                                    
-                            if 'E_55' in core_dict_full: core_dict['E_55'] = core_dict_full['E_55']
-                            # ------------------------------------------------
-                            
-                            # --- KEY MASKING: Hide the underscores from Gemini! ---
-                            # --- KEY MASKING: The "Unconfusable" Prefix ---
-                            safe_dict = {}
-                            safe_to_real = {}
-                            for i, (real_code, text) in enumerate(core_dict.items()):
-                                safe_key = f"TAG_{i}"  # FIX: 'TAG_' is impossible for the AI to confuse with a number
-                                safe_dict[safe_key] = text
-                                safe_to_real[safe_key] = real_code
-                            # ------------------------------------------------------
-                            
-                            # 2. The Final Extraction Prompt
-                            extraction_prompt = f"""You are an expert Medical Scribe. 
+                            # --- TIER 1: LLM Extraction (Groq/Llama-3 for Blazing Speed & JSON Format) ---
+                            # --- TIER 1: CLINICAL TRANSLATION (LLM converts layman to medical terms) ---
+                            # --- TIER 1: CLINICAL TRANSLATION (LLM converts layman to medical terms) ---
+                            extraction_prompt = f"""You are an elite Clinical NLP Scribe. 
                             Review this triage conversation:
                             
                             {transcript}
                             
-                            Here is your allowed dictionary of symptoms:
-                            {json.dumps(safe_dict, indent=2)}
+                            Extract ALL symptoms the patient confirmed and denied. 
+                            CRITICAL RULE: You MUST translate their layman descriptions into precise, standard medical terminology.
                             
-                            CRITICAL RULES:
-                            1. THINK FIRST: Read carefully for negations. If they say "no nausea", it goes in the denied list. 
-                            2. EXACT LOCATIONS: Pay close attention to exactly where the pain is and find the precise location code.
-                            3. STRICT STRINGS: ONLY output the exact strings provided (e.g., "TAG_15"). Do not change the letters.
+                            Examples:
+                            - "pain when pressing and letting go" -> "rebound tenderness"
+                            - "lower right stomach pain" -> "right lower quadrant abdominal pain"
+                            - "watery eye" -> "excessive tearing"
+                            - "burns when peeing" -> "dysuria"
+                            - "lost appetite" -> "anorexia"
                             
-                            Output ONLY a JSON object in this EXACT format:
+                            Output ONLY a JSON object:
                             {{
-                                "reasoning": "Patient explicitly denied nausea (TAG_12). Confirmed stomach pain (TAG_4).",
-                                "confirmed_codes": ["TAG_4", "TAG_8"],
-                                "denied_codes": ["TAG_12"]
+                                "present": ["list", "of", "translated", "clinical", "terms"],
+                                "absent": ["list", "of", "denied", "clinical", "terms"]
                             }}"""
                             
                             try:
-                                # Send to Gemini 2.5 Flash
-                                scribe_model = genai.GenerativeModel(
-                                    model_name="gemini-2.5-flash",
-                                    generation_config={"response_mime_type": "application/json", "temperature": 0.0}
+                                extraction = client.chat.completions.create(
+                                    model="llama-3.3-70b-versatile",
+                                    messages=[{"role": "system", "content": extraction_prompt}],
+                                    temperature=0.0,
+                                    response_format={"type": "json_object"}
                                 )
-                                extraction = scribe_model.generate_content(extraction_prompt)
+                                full_json = json.loads(extraction.choices[0].message.content)
+                                present_strings = full_json.get("present", [])
+                                absent_strings = full_json.get("absent", [])
                                 
-                                # Parse the Array format
-                                full_json = json.loads(extraction.text)
-                                confirmed_safe = full_json.get("confirmed_codes", [])
-                                denied_safe = full_json.get("denied_codes", [])
-                                
-                                # --- UNMASK THE KEYS FOR THE MATH ENGINE ---
+                                # --- TIER 2: BATCH AGENTIC RAG (70B LLM logically maps the translated terms) ---
+                                # --- TIER 2: SEQUENTIAL AGENTIC RAG (Zero Dropped Keys, Rate-Limit Safe) ---
                                 valid_json = {}
-                                for scode in confirmed_safe:
-                                    real_code = safe_to_real.get(scode)
-                                    if real_code and real_code in master_columns: 
-                                        valid_json[real_code] = 1
+                                debug_mapping = {}
+                                
+                                # Combine present and absent into one list for the loop
+                                all_terms = [(t, 'present') for t in present_strings] + [(t, 'absent') for t in absent_strings]
+                                
+                                for term, status in all_terms:
+                                    # 1. Hybrid Search for this ONE specific term
+                                    tokenized_query = term.lower().split()
+                                    bm25_scores = bm25.get_scores(tokenized_query)
+                                    if np.max(bm25_scores) > 0:
+                                        bm25_scores = bm25_scores / np.max(bm25_scores)
                                         
-                                for scode in denied_safe:
-                                    real_code = safe_to_real.get(scode)
-                                    if real_code and real_code in master_columns: 
-                                        valid_json[real_code] = 0
-                                # -------------------------------------------
+                                    vec = embedder.encode([term])
+                                    sem_scores = cosine_similarity(vec, corpus_embeddings)[0]
+                                    
+                                    combined_scores = (bm25_scores * 0.4) + (sem_scores * 0.6)
+                                    top_indices = np.argsort(combined_scores)[::-1][:7] # Pull top 7 options
+                                    
+                                    candidates = {code_map[idx]: raw_text_map[idx] for idx in top_indices}
+                                    
+                                    # 2. Ask 70B to hyper-focus on mapping JUST THIS ONE TERM
+                                    prompt = f"""You are a strict clinical mapping auditor.
+                                    Target term: "{term}"
+                                    
+                                    Map this term to the single best DDXPlus code from these options:
+                                    {json.dumps(candidates, indent=2)}
+                                    
+                                    RULES:
+                                    1. "rebound tenderness" MUST map to E_144.
+                                    2. Location pain (RLQ, abdominal) MUST map to E_55_... codes (NOT E_133 which is for rashes/lesions).
+                                    3. If there is no logical match, output "NONE".
+                                    
+                                    Output ONLY a JSON object: {{"code": "E_XXX"}} or {{"code": "NONE"}}"""
+                                    
+                                    try:
+                                        resp = client.chat.completions.create(
+                                            model="llama-3.3-70b-versatile",
+                                            messages=[{"role": "system", "content": prompt}],
+                                            temperature=0.0,
+                                            response_format={"type": "json_object"}
+                                        )
+                                        result = json.loads(resp.choices[0].message.content)
+                                        code = result.get("code")
+                                        
+                                        if code and code != "NONE" and code in master_columns:
+                                            if status == 'present':
+                                                valid_json[code] = 1
+                                                debug_mapping[f"✅ {term}"] = f"Code: {code} ({candidates.get(code, '')})"
+                                            else:
+                                                valid_json[code] = 0
+                                                debug_mapping[f"❌ {term}"] = f"Code: {code} ({candidates.get(code, '')})"
+                                    except:
+                                        pass
+                                        
+                                    # 3. THE MAGIC FIX: Sleep for 1.5 seconds to bypass API rate limits
+                                    time.sleep(1.5)
+
+                                # --- TIER 3: HIERARCHICAL BUBBLING & MASTER NODES ---
+                                for key in list(valid_json.keys()):
+                                    if '_@_' in key and valid_json[key] == 1:
+                                        base_key = key.split('_@_')[0]
+                                        if base_key in master_columns:
+                                            valid_json[base_key] = 1
+                                            debug_mapping[f"⬆️ BUBBLE OVERRIDE"] = f"Forced Parent {base_key} to 1 based on {key}"
+                                            
+                                pain_codes = [k for k in valid_json.keys() if k.startswith('E_54') or k.startswith('E_55') or k.startswith('E_56') or k.startswith('E_57')]
+                                if len(pain_codes) > 0 and 'E_53' in master_columns:
+                                    valid_json['E_53'] = 1
+                                    debug_mapping["🚨 MASTER PAIN OVERRIDE"] = "Forced E_53 (Master Pain Node) to 1."
+
+                                st.session_state.debug_extracted_json = {"1_Translation": full_json, "2_70B_Mapping": debug_mapping}
                                 
-                                # Save the FULL JSON so we can read the AI's mind on screen!
-                                st.session_state.debug_extracted_json = full_json
-                                
+                                # 3. Initialize Tracker and Run Math
                                 # 3. Initialize Tracker and Run Math
                                 pat_age = st.session_state.patient_record["age"] if st.session_state.patient_record["age"] is not None else 30
                                 pat_sex = st.session_state.patient_record["sex"] if st.session_state.patient_record["sex"] is not None else "male"
@@ -322,9 +392,24 @@ if not st.session_state.triage_complete:
                                 tracker = PatientTracker(age=pat_age, sex_is_male=is_male)
                                 tracker.update_symptoms(valid_json)
                                 
-                                probs = calculate_true_confidence(tracker.state, bnb_model)
-                                top_3_indices = np.argsort(probs)[::-1][:3]
+                                # --- TIER 4: THE PURE MATH PROTOCOL ---
+                                tracker.state[tracker.state == -1] = 0 # Required: The model expects 800 zeros
                                 
+                                # 1. Use the mathematically perfect built-in Scikit-Learn function
+                                raw_probs = bnb_model.predict_proba(tracker.state)[0]
+                                
+                                # 2. Safely filter out impossible diseases POST-prediction
+                                for i, disease in enumerate(label_encoder.classes_):
+                                    # Nuke exotic diseases for standard clinics
+                                    if disease in ['Ebola', 'Chagas', 'Larygospasm']:
+                                        raw_probs[i] *= 0.00001
+                                    # Age-gate pediatric diseases so adults don't get Croup
+                                    elif disease in ['Croup', 'Bronchiolitis', 'Whooping cough'] and pat_age > 15:
+                                        raw_probs[i] *= 0.00001
+                                        
+                                # 3. Re-normalize probabilities to 100%
+                                probs = raw_probs / np.sum(raw_probs)
+                                top_3_indices = np.argsort(probs)[::-1][:3]
                                 # 4. Save the Results to Memory!
                                 st.session_state.top_3_results = []
                                 top_3_names = []
@@ -334,29 +419,55 @@ if not st.session_state.triage_complete:
                                     confidence = probs[idx] * 100
                                     st.session_state.top_3_results.append(f"**{i+1}. {disease}** ({confidence:.1f}% confidence)")
                                 
-                                # 5. Fire up the CMO (Gemini)
-                                severity, alert = evaluate_clinical_severity(top_3_names)
-                                cmo_model = genai.GenerativeModel(
-                                    model_name="gemini-2.5-flash", 
-                                    system_instruction=generate_cmo_prompt(top_3_names, alert, transcript)
-                                )
-                                st.session_state.cmo_chat = cmo_model.start_chat(history=[])
-                                initial_response = st.session_state.cmo_chat.send_message("Please give me my triage results and explain what they mean.")
-                                st.session_state.cmo_messages = [{"role": "assistant", "content": initial_response.text}]
-                                st.session_state.current_phase = "CMO_QA"
+                                # 5. THE CHIEF MEDICAL OFFICER (Sanity Check & Dual Report)
+                                cmo_eval_prompt = f"""You are the Chief Medical Officer, the ultimate clinical safety net.
                                 
-                                st.session_state.triage_complete = True
-                                st.rerun()
+                                PATIENT DATA:
+                                - Age: {pat_age}
+                                - Sex: {pat_sex}
+                                - Confirmed Symptoms: {present_strings}
+                                - Denied Symptoms: {absent_strings}
+                                
+                                MATH ENGINE PREDICTIONS: {top_3_names}
+                                
+                                YOUR MISSION:
+                                1. SANITY CHECK: Does the Math Engine's #1 prediction make logical clinical sense? (e.g., if it predicted Ebola for a headache, or COPD for a 2-year-old, it is critically wrong).
+                                2. OVERRIDE: If the engine is wrong, you MUST override it with the correct medical diagnosis based purely on the symptoms provided.
+                                3. DUAL REPORT: Write two separate reports based on the final verified diagnosis. One for the patient, and one for the attending doctor.
+                                
+                                Output ONLY a JSON object in this exact format:
+                                {{
+                                    "engine_was_correct": true/false,
+                                    "final_diagnosis": "The verified disease name",
+                                    "patient_friendly_report": "Speak directly to the patient. Use zero medical jargon. Be empathetic, explain the condition simply, and provide actionable next steps.",
+                                    "clinical_report": "Speak to the attending physician. Use strict medical terminology. Summarize the clinical presentation, why this diagnosis fits, and recommended clinical management."
+                                }}"""
+                                
+                                try:
+                                    cmo_resp = client.chat.completions.create(
+                                        model="llama-3.3-70b-versatile",
+                                        messages=[{"role": "system", "content": cmo_eval_prompt}],
+                                        temperature=0.0, # 0.0 forces strict logical reasoning
+                                        response_format={"type": "json_object"}
+                                    )
+                                    cmo_evaluation = json.loads(cmo_resp.choices[0].message.content)
+                                    
+                                    st.session_state.cmo_eval = cmo_evaluation
+                                    st.session_state.triage_complete = True
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"CMO Evaluation Error: {e}")
                                 
                             except Exception as e:
                                 st.error(f"Diagnostic Engine Error: {e}")
                     
                     # 5. THE NORMAL CHAT FLOW (If we aren't diagnosing yet)
+                    # 5. THE NORMAL CHAT FLOW (If we aren't diagnosing yet)
                     else:
                         try:
-                            # Using Llama 3.1 8b for blazing fast conversational speed
+                            # Using 70B for much better conversational empathy and logic
                             chat_completion = client.chat.completions.create(
-                                model="llama-3.1-8b-instant",
+                                model="llama-3.3-70b-versatile", # <--- SWAPPED TO 70B
                                 messages=[{"role": "system", "content": system_prompt}] + st.session_state.messages,
                                 temperature=0.5
                             )
@@ -378,62 +489,87 @@ if not st.session_state.triage_complete:
                             st.error(f"API Error: {e}")
 
 
-# --- 7. FINAL DIAGNOSIS SCREEN & CMO Q&A ---
+# --- 7. FINAL DIAGNOSIS SCREEN & CMO DUAL REPORT ---
 if st.session_state.triage_complete:
-    st.success("✅ Diagnostic Engine Complete. Transferring to the Chief Medical Officer...")
+    st.success("✅ Assessment Complete. Your report has been generated.")
     
-    # --- FIX: Draw the debug box here so it stays permanently ---
-    if "debug_extracted_json" in st.session_state:
-        st.info("🔍 **System Debug - Symptoms Extracted by Gemini:**")
-        st.json(st.session_state.debug_extracted_json)
-    # ------------------------------------------------------------
+    cmo_data = st.session_state.cmo_eval
     
-    st.markdown("### Top Suspected Conditions:")
-    for result in st.session_state.top_3_results:
-        st.write(result)
+    # DUAL REPORT TABS (Debug logs, Overrides, and explicit Disease Names are hidden)
+    tab1, tab2 = st.tabs(["👤 Patient Report", "⚕️ Clinical Report (Medical)"])
+    
+    with tab1:
+        st.write(cmo_data.get("patient_friendly_report", ""))
+        
+    with tab2:
+        st.write(cmo_data.get("clinical_report", ""))
+        
     st.markdown("---")
 
-    if st.session_state.get("current_phase") == "CMO_QA":
-        # 1. Draw the CMO Conversation History
+    # 4. Action Chips & Follow-Up (We reset the chat history here to start fresh with the CMO)
+
+    # 4. Action Chips & Follow-Up (We reset the chat history here to start fresh with the CMO)
+    if "cmo_messages" not in st.session_state:
+        st.session_state.cmo_messages = []
+        
+    st.write("💡 **Suggested Questions:**")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("💊 What are my treatment options?", use_container_width=True):
+            st.session_state.chip_trigger = "What are my treatment options?"
+            st.rerun()
+    with col2:
+        if st.button("🍲 Are there any home remedies?", use_container_width=True):
+            st.session_state.chip_trigger = "Are there any home remedies?"
+            st.rerun()
+    with col3:
+        # NEW: Dos and Don'ts Button
+        if st.button("✅❌ Dos and Don'ts", use_container_width=True):
+            st.session_state.chip_trigger = "What are the immediate Dos and Don'ts for my condition right now?"
+            st.rerun()
+
+    # 5. The Follow-Up Chat Box (Using Groq instead of Gemini to prevent limits)
+    cmo_input = st.chat_input("Ask a follow-up question about your diagnosis...")
+    
+    if st.session_state.get("chip_trigger"):
+        cmo_input = st.session_state.chip_trigger
+        del st.session_state.chip_trigger  
+        
+    if cmo_input:
+        st.session_state.cmo_messages.append({"role": "user", "content": cmo_input})
+        
         for msg in st.session_state.cmo_messages:
             with st.chat_message(msg["role"]):
                 st.markdown(msg["content"])
                 
-        # 2. DYNAMIC ACTION CHIPS
-        if st.session_state.cmo_messages[-1]["role"] == "assistant":
-            st.write("💡 **Suggested Questions:**")
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                if st.button("💊 What are my treatment options?", use_container_width=True):
-                    st.session_state.chip_trigger = "What are my treatment options?"
-                    st.rerun()
-            with col2:
-                if st.button("🍲 What foods should I eat or avoid?", use_container_width=True):
-                    st.session_state.chip_trigger = "What foods should I eat or avoid?"
-                    st.rerun()
-            with col3:
-                # FIX: Added a unique 'key' to prevent the duplicate ID crash
-                if st.button("🔄 Start New Assessment", type="primary", use_container_width=True, key="cmo_restart"):
-                    st.session_state.clear()
-                    st.rerun()
-
-        # 3. The Follow-Up Chat Box
-        cmo_input = st.chat_input("Ask a follow-up question about your results...")
-        
-        if st.session_state.get("chip_trigger"):
-            cmo_input = st.session_state.chip_trigger
-            del st.session_state.chip_trigger  
-            
-        if cmo_input:
-            st.session_state.cmo_messages.append({"role": "user", "content": cmo_input})
-            with st.chat_message("user"): st.markdown(cmo_input)
-                
-            with st.chat_message("assistant"):
-                with st.spinner("The Chief Medical Officer is typing..."):
-                    try:
-                        cmo_response = st.session_state.cmo_chat.send_message(cmo_input)
-                        st.markdown(cmo_response.text)
-                        st.session_state.cmo_messages.append({"role": "assistant", "content": cmo_response.text})
-                        st.rerun() 
-                    except Exception as e:
-                        st.error(f"CMO Connection Error: {e}")
+        with st.chat_message("assistant"):
+            with st.spinner("The Chief Medical Officer is typing..."):
+                try:
+                    # THE ELITE CMO FOLLOW-UP GUARDRAILS
+                    # THE ELITE CMO FOLLOW-UP GUARDRAILS (EXTREME BREVITY)
+                    # THE ELITE CMO FOLLOW-UP GUARDRAILS (BALANCED & SCANNABLE)
+                    cmo_follow_up_rules = f"""You are an elite, empathetic clinical AI discussing a triage diagnosis of {cmo_data.get('final_diagnosis')}.
+                    
+                    CRITICAL RULES FOR YOUR RESPONSE:
+                    1. THE GOLDILOCKS LENGTH: Do not write a massive essay, but do not be a robot. Give clear, 1 to 2 sentence explanations for every point you make.
+                    2. SCANNABLE FORMAT: Use bolded bullet points so the patient can read it quickly.
+                    3. ZERO FLUFF: NEVER use introductory filler like "As your Chief Medical Officer" or "I am glad you asked." Start delivering the medical information immediately.
+                    4. CLINICAL CAUTION: For surgical or life-threatening emergencies (Appendicitis, Heart Attack, Stroke, etc.):
+                       - STRICTLY BAN home remedies, heat, or ice.
+                       - EXPLICITLY WARN the patient NOT to eat, drink, or take pain meds.
+                    5. THE DOCTOR PIVOT: End your response with exactly one clear, professional sentence directing them to urgent care or a human doctor for official treatment.
+                    """
+                    
+                    follow_up_prompt = [{"role": "system", "content": cmo_follow_up_rules}]
+                    follow_up_prompt.extend(st.session_state.cmo_messages)
+                    
+                    cmo_response = client.chat.completions.create(
+                        model="llama-3.3-70b-versatile",
+                        messages=follow_up_prompt,
+                        temperature=0.3 # Lowered temperature to stop it from "getting creative" with remedies
+                    )
+                    reply_text = cmo_response.choices[0].message.content
+                    st.markdown(reply_text)
+                    st.session_state.cmo_messages.append({"role": "assistant", "content": reply_text})
+                except Exception as e:
+                    st.error(f"CMO Connection Error: {e}")

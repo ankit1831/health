@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Heal Bridge | AI Triage System</title>
+    <link rel="stylesheet" href="/static/style.css?v=999" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="nav-brand">🩺 Heal Bridge</div>
+      <ul class="nav-links">
+        <li><a href="#home">Home</a></li>
+        <li><a href="#about">Architecture</a></li>
+        <li>
+          <a href="#" class="nav-btn launch-modal-btn">Start Diagnosis</a>
+        </li>
+        <li><a href="#locate">Locate Doctors</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+
+    <section id="home" class="hero">
+      <div class="hero-content">
+        <h1>Autonomous AI Medical Triage</h1>
+        <p>
+          An enterprise-grade diagnostic engine powered by Agentic RAG,
+          Scikit-Learn Naive Bayes, and Groq Llama-3. Get instant,
+          mathematically-backed symptom analysis.
+        </p>
+        <div class="hero-buttons">
+          <a href="#" class="btn primary-btn btn-large launch-modal-btn"
+            >Launch Triage Engine</a
+          >
+          <a href="#about" class="btn secondary-btn btn-large"
+            >View Architecture</a
+          >
+        </div>
+      </div>
+    </section>
+
+    <section id="about" class="about-section">
+      <h2>Built for Precision. Powered by AI.</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <h3>🧠 Agentic RAG Translation</h3>
+          <p>
+            Translates layman symptoms into precise clinical terminology using a
+            70B LLM and Semantic Hybrid Search.
+          </p>
+        </div>
+        <div class="feature-card">
+          <h3>📊 Naive Bayes Math Engine</h3>
+          <p>
+            Calculates exact probabilities across 800+ symptoms using
+            epidemiological baselines and age-gated filters.
+          </p>
+        </div>
+        <div class="feature-card">
+          <h3>🩺 Chief Medical Officer LLM</h3>
+          <p>
+            A final AI supervisor that audits the math engine to prevent
+            hallucinations and generates safe, patient-friendly reports.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <div id="triage-modal" class="modal-overlay hidden">
+      <div class="app-container">
+        <button id="close-modal" class="close-btn">&times;</button>
+
+        <aside class="sidebar">
+          <div class="brand">
+            <h2>🩺 Heal Bridge</h2>
+            <p>Live Assessment</p>
+          </div>
+          <div class="patient-card">
+            <h3>Patient Profile</h3>
+            <div class="profile-details">
+              <p><strong>Age:</strong> <span id="ui-age">Pending</span></p>
+              <p><strong>Sex:</strong> <span id="ui-sex">Pending</span></p>
+            </div>
+          </div>
+          <div class="controls">
+            <button id="btn-restart" class="btn secondary-btn">
+              🔄 Reset Assessment
+            </button>
+          </div>
+        </aside>
+
+        <main class="chat-container">
+          <div class="chat-header">
+            <h3>Triage Assistant</h3>
+          </div>
+          <div class="chat-box" id="chat-box">
+            <div class="message ai-message">
+              <div class="message-content">
+                Hello. I am the Heal Bridge Triage Assistant. Could you please
+                tell me your age, biological sex, and what brings you in today?
+              </div>
+            </div>
+          </div>
+
+          <div class="input-area" id="input-area">
+            <textarea
+              id="user-input"
+              rows="1"
+              placeholder="Type your message here..."
+              autocomplete="off"
+            ></textarea>
+            <button id="btn-send" class="btn send-btn">Send ➔</button>
+
+            <button
+              id="btn-predict"
+              class="btn"
+              style="
+                background: var(--brand-gradient);
+                color: white;
+                display: none;
+                height: 56px;
+                padding: 0 24px;
+                border-radius: 12px;
+                font-weight: 600;
+                border: none;
+                cursor: pointer;
+                white-space: nowrap;
+                box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+              "
+            >
+              🩺 Predict
+            </button>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <section id="locate" class="locate-section">
+      <div class="section-header">
+        <h2>Find Specialists Near You</h2>
+        <p>
+          Connect with top-rated medical professionals and emergency care in
+          your area.
+        </p>
+      </div>
+
+      <div class="search-container">
+        <div class="search-bar">
+          <input
+            type="text"
+            id="map-search-input"
+            placeholder="Enter Zip Code, City, or Specialty..."
+          />
+          <button class="btn primary-btn" id="btn-search-map">🔍 Search</button>
+        </div>
+        <div class="filter-chips">
+          <button class="chip active">All Facilities</button>
+          <button class="chip">🚨 Emergency Rooms</button>
+          <button class="chip">🩺 General Physicians</button>
+          <button class="chip">👶 Pediatrics</button>
+        </div>
+      </div>
+
+      <div class="locate-workspace">
+        <div class="directory-panel">
+          <div class="facility-card clinic-card">
+            <div class="card-header">
+              <h3>Metro Health Medical Center</h3>
+              <span class="status-badge emergency">⏱️ 15m wait</span>
+            </div>
+            <p class="facility-type">🏥 General Hospital & Trauma Care</p>
+            <p class="facility-address">
+              📍 122 Medical Center Blvd, City Center
+            </p>
+            <div class="card-footer">
+              <span class="distance">🚗 1.2 miles away</span>
+              <button class="card-action-btn text-btn">Call ER</button>
+            </div>
+          </div>
+
+          <div class="facility-card">
+            <div class="card-header">
+              <h3>CareFirst Urgent Care</h3>
+              <span class="status-badge open">🟢 Open 24/7</span>
+            </div>
+            <p class="facility-type">🩺 Urgent Care & Walk-in Clinic</p>
+            <p class="facility-address">📍 404 Health Ave, Suite 10</p>
+            <div class="card-footer">
+              <span class="distance">🚗 3.5 miles away</span>
+              <button class="card-action-btn">Directions</button>
+            </div>
+          </div>
+
+          <div class="facility-card">
+            <div class="card-header">
+              <h3>St. Jude Pediatric Clinic</h3>
+              <span class="status-badge open">🟢 Open Now</span>
+            </div>
+            <p class="facility-type">👶 Specialized Pediatric Care</p>
+            <p class="facility-address">📍 710 Childrens Lane</p>
+            <div class="card-footer">
+              <span class="distance">🚗 4.8 miles away</span>
+              <button class="card-action-btn">Directions</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="map-wrapper">
+          <div class="map-placeholder" id="map-container">
+            <p id="map-status-text">🗺️ Interactive Map Integration Loaded</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer id="contact">
+      <div class="footer-content">
+        <h2>🩺 Heal Bridge</h2>
+        <p>Developed by Ankit Sharma | AI/ML Portfolio</p>
+        <div class="social-links">
+          <a href="#">GitHub</a>
+          <a href="#">LinkedIn</a>
+          <a href="#">Portfolio</a>
+        </div>
+        <p class="disclaimer">
+          Disclaimer: Heal Bridge is an AI demonstration project. It is not a
+          substitute for professional medical advice, diagnosis, or treatment.
+        </p>
+      </div>
+    </footer>
+
+    <script src="/static/script.js?v=999"></script>
+  </body>
+</html>

@@ -171,12 +171,12 @@ document.getElementById("btn-restart").addEventListener("click", () => {
 });
 
 // --- PREDICT LOGIC ---
-document.getElementById("btn-predict").addEventListener("click", async () => {
+window.runDiagnosticPrediction = async function () {
   if (!isReceptionistPassed) {
     addMessage("Please complete the initial details first.", "ai");
     return;
   }
-  // 🟢 NEW: DISABLE BUTTONS TO PREVENT DOUBLE-CLICK CRASHES 🟢
+  // 🟢 DISABLE BUTTONS TO PREVENT DOUBLE-CLICK CRASHES 🟢
   document.getElementById("btn-predict").disabled = true;
   document.getElementById("btn-send").disabled = true;
   userInput.disabled = true;
@@ -207,7 +207,7 @@ document.getElementById("btn-predict").addEventListener("click", async () => {
     currentDiagnosis = data.final_diagnosis;
     const severityColor = data.severity;
 
-    // 🟢 NEW: Save the data so the PDF builder can access it
+    // 🟢 Save the data so the PDF builder can access it
     currentReportData = {
       diagnosis: data.final_diagnosis,
       patientReport: data.patient_friendly_report,
@@ -226,13 +226,13 @@ document.getElementById("btn-predict").addEventListener("click", async () => {
         "border: 3px solid #ff4444; background-color: #fff0f0; box-shadow: 0 0 15px rgba(255, 68, 68, 0.4);";
       alertBanner = `<div style="color: #cc0000; font-weight: bold; margin-bottom: 15px; padding: 10px; background: #ffe5e5; border-radius: 5px;">🚨 EMERGENCY: Seek immediate medical attention. Do not wait.</div>`;
 
-      // 🟢 NEW: Auto-Trigger the GPS Map!
+      // Auto-Trigger the GPS Map!
       setTimeout(() => {
-        window.findNearestHospitals(); // Uses GPS automatically
+        window.findNearestHospitals();
         document
           .getElementById("locate")
           .scrollIntoView({ behavior: "smooth" });
-      }, 1500); // Waits 1.5 seconds so they read the diagnosis first
+      }, 1500);
     } else if (severityColor === "YELLOW") {
       borderStyle = "border: 3px solid #ffbb33; background-color: #fffcf0;";
       alertBanner = `<div style="color: #b27b00; font-weight: bold; margin-bottom: 15px; padding: 10px; background: #fff8e5; border-radius: 5px;">⚠️ URGENT: Please schedule an appointment with a doctor soon.</div>`;
@@ -257,14 +257,14 @@ document.getElementById("btn-predict").addEventListener("click", async () => {
             <div id="pat-${uniqueId}" class="tab-content active">${data.patient_friendly_report.replace(/\n/g, "<br>")}</div>
             <div id="clin-${uniqueId}" class="tab-content hidden">${data.clinical_report.replace(/\n/g, "<br>")}</div>
             
-            <div class="action-chips" style="margin-top: 25px;">
-                <button class="chip" onclick="document.getElementById('user-input').value='What are my treatment options?'; document.getElementById('btn-send').click();">💊 Treatment Options</button>
-                <button class="chip" onclick="document.getElementById('user-input').value='Are there any home remedies?'; document.getElementById('btn-send').click();">🍲 Home Remedies</button>
-                <button class="chip" onclick="document.getElementById('user-input').value='What are the immediate Dos and Don\\'ts for my condition right now?'; document.getElementById('btn-send').click();">Dos and Don'ts</button>
+            <div class="action-chips" style="margin-top: 25px; display: flex; gap: 8px; flex-wrap: wrap;">
+                <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('user-input').value='What are my treatment options?'; document.getElementById('btn-send').click();">Treatment Options</button>
+                <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('user-input').value='Are there any home remedies?'; document.getElementById('btn-send').click();">Home Remedies</button>
+                <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('user-input').value='What are the immediate Dos and Don\\'ts?'; document.getElementById('btn-send').click();">Dos and Don'ts</button>
                 
-                <button class="chip" style="background: #0f172a; color: white; border: none; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2);" onclick="generatePDF()">Download Medical Report</button>
-                
-                <button class="chip" style="background: #ef4444; color: white; border: none; font-weight: bold; box-shadow: 0 4px 10px rgba(239,68,68,0.3);" onclick="document.getElementById('triage-modal').classList.add('hidden'); document.getElementById('locate').scrollIntoView({ behavior: 'smooth' }); window.findNearestHospitals();">🗺️ View Nearby Hospitals</button>            </div>
+                <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; background: #1e293b; color: white; cursor: pointer; transition: 0.2s;" onclick="generatePDF()">Download Report</button>
+                <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; background: #ef4444; color: white; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('triage-modal').classList.add('hidden'); document.getElementById('locate').scrollIntoView({ behavior: 'smooth' }); window.findNearestHospitals();">View Nearby Hospitals</button>
+            </div>
         </div>
     `;
 
@@ -282,13 +282,17 @@ document.getElementById("btn-predict").addEventListener("click", async () => {
     document.getElementById("btn-predict").style.display = "inline-block";
     addMessage(`❌ **Diagnostic Engine Error:** ${error.message}`, "ai");
   } finally {
-    // 🟢 NEW: RE-ENABLE BUTTONS AFTER THE API FINISHES 🟢
     document.getElementById("btn-predict").disabled = false;
     document.getElementById("btn-send").disabled = false;
     userInput.disabled = false;
     userInput.focus();
   }
-});
+};
+
+// 🟢 BIND BOTH TO THE MASTER FUNCTION 🟢
+document
+  .getElementById("btn-predict")
+  .addEventListener("click", window.runDiagnosticPrediction);
 
 // --- SEND LOGIC ---
 btnSend.addEventListener("click", async () => {
@@ -325,6 +329,12 @@ btnSend.addEventListener("click", async () => {
     } catch (error) {
       removeLoadingBubble(loadingId);
       addMessage(`❌ **Error:** ${error.message}`, "ai");
+    } finally {
+      // 🟢 FIX: Re-enable the buttons so you can ask multiple questions!
+      btnSend.disabled = false;
+      document.getElementById("btn-predict").disabled = false;
+      userInput.disabled = false;
+      userInput.focus();
     }
     return;
   }
@@ -429,10 +439,10 @@ btnSend.addEventListener("click", async () => {
     }
 
     // --- Post-Stream Processing ---
-    // If they typed "predict" or a massive essay, trigger the prediction
+    // If they typed "predict" or a massive essay, trigger the prediction directly
     if (wordCount >= 75 || text.toLowerCase().includes("predict")) {
       if (isReceptionistPassed) {
-        document.getElementById("btn-predict").click();
+        window.runDiagnosticPrediction();
       } else {
         addMessage(
           "Please finish providing your initial details before predicting.",
@@ -447,6 +457,7 @@ btnSend.addEventListener("click", async () => {
     apiChatHistory.push({ role: "assistant", content: fullAiReply });
     fullTranscript += `AI: ${fullAiReply}\n`;
 
+    // 🟢 BULLETPROOF QUESTION INTERCEPTOR 🟢
     if (isReceptionistPassed) {
       diagnosticQuestionCount++;
       if (diagnosticQuestionCount === diagnosticQuestionLimit) {
@@ -457,7 +468,7 @@ btnSend.addEventListener("click", async () => {
                     I have gathered enough information to form a clinical picture. What would you like to do?
                 </p>
                 <div class="action-chips">
-                    <button class="chip" style="background: var(--brand-gradient); color: white; border: none;" onclick="document.getElementById('btn-predict').click(); document.getElementById('intercept-${uniqueId}').style.display='none';">🩺 Predict Diagnosis</button>
+                    <button class="chip" style="background: var(--brand-gradient); color: white; border: none;" onclick="document.getElementById('intercept-${uniqueId}').style.display='none'; window.runDiagnosticPrediction();">🩺 Predict Diagnosis</button>
                     <button class="chip" onclick="window.extendChat('intercept-${uniqueId}')">💬 Give More Symptoms</button>
                 </div>
             </div>
@@ -612,9 +623,8 @@ window.generatePDF = function () {
   // 3. Generate and trigger download
   html2pdf().set(opt).from(pdfContainer).save();
 };
-
 // ==========================================
-// 🟢 GEOLOCATION, DYNAMIC DIRECTORY & FILTERS 🟢
+// 🟢 GEOLOCATION & REAL DYNAMIC DIRECTORY 🟢
 // ==========================================
 
 let userActualLat = null;
@@ -625,9 +635,9 @@ window.findNearestHospitals = async function (manualLocation = "") {
   const directoryPanel = document.querySelector(".directory-panel");
 
   mapContainer.innerHTML = `<p id="map-status-text" style="font-weight: 600; color: var(--brand-blue);">📍 Locating nearby medical centers...</p>`;
-  directoryPanel.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--text-muted);">🔄 Searching database...</div>`;
+  directoryPanel.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--text-muted);">🔄 Searching global satellite database...</div>`;
 
-  // 🟢 PATH A: Manual Search
+  // 🟢 PATH A: Manual Search (User typed a city)
   if (manualLocation.trim() !== "") {
     try {
       const geoResponse = await fetch(
@@ -639,10 +649,9 @@ window.findNearestHospitals = async function (manualLocation = "") {
         const searchLat = geoData[0].lat;
         const searchLon = geoData[0].lon;
 
-        // FIX 1: Map now searches for "hospitals near" to drop red pins!
-        const mapQuery = encodeURIComponent(
-          `hospitals near ${searchLat},${searchLon}`,
-        );
+        // 🏆 THE REAL FIX 1: OFFICIAL GOOGLE MAPS EMBED URL 🏆
+        // 🏆 FIX 1: Corrected $ signs and standard Maps URL
+        const mapQuery = encodeURIComponent(`hospitals near ${manualLocation}`);
         const mapUrl = `https://maps.google.com/maps?q=${mapQuery}&t=&z=13&ie=UTF8&iwloc=&output=embed`;
         mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" style="border:0; border-radius: 12px;" src="${mapUrl}"></iframe>`;
 
@@ -658,7 +667,9 @@ window.findNearestHospitals = async function (manualLocation = "") {
   }
 
   // 🟢 PATH B: GPS Auto-Location
+  // 🟢 PATH B: GPS Auto-Location
   if (userActualLat !== null && userActualLon !== null) {
+    // 🏆 FIX 2: Corrected $ signs and standard Maps URL
     const mapQuery = encodeURIComponent(
       `hospitals near ${userActualLat},${userActualLon}`,
     );
@@ -667,23 +678,26 @@ window.findNearestHospitals = async function (manualLocation = "") {
 
     fetchRealHospitals(userActualLat, userActualLon);
   } else {
-    mapContainer.innerHTML = `<p style="color: #ef4444; font-weight: 600;">❌ Please allow location access or type your City above.</p>`;
-    directoryPanel.innerHTML = `<div style="padding: 20px; text-align:center;">Location access is required to show nearby facilities automatically.<br><br><b>Please use the search bar above.</b></div>`;
+    mapContainer.innerHTML = `<p style="color: #ef4444; font-weight: 600;">❌ Please click "Near Me" or type your City above.</p>`;
+    directoryPanel.innerHTML = `<div style="padding: 20px; text-align:center;">Location access is required to show nearby facilities automatically.<br><br><b>Please click "Near Me" or search above.</b></div>`;
   }
 };
 
-// --- FETCH REAL OPEN-SOURCE HOSPITAL DATA ---
+// --- FETCH REAL OPEN-SOURCE HOSPITAL DATA (SUPER-QUERY) ---
 async function fetchRealHospitals(searchLat, searchLon) {
   const directoryPanel = document.querySelector(".directory-panel");
 
   const query = `
-    [out:json][timeout:15];
+    [out:json][timeout:25];
     (
-      node["amenity"="hospital"](around:15000,${searchLat},${searchLon});
-      way["amenity"="hospital"](around:15000,${searchLat},${searchLon});
-      node["amenity"="clinic"](around:15000,${searchLat},${searchLon});
+      node["amenity"="hospital"](around:25000,${searchLat},${searchLon});
+      way["amenity"="hospital"](around:25000,${searchLat},${searchLon});
+      relation["amenity"="hospital"](around:25000,${searchLat},${searchLon});
+      node["healthcare"="hospital"](around:25000,${searchLat},${searchLon});
+      way["healthcare"="hospital"](around:25000,${searchLat},${searchLon});
+      relation["healthcare"="hospital"](around:25000,${searchLat},${searchLon});
     );
-    out center 15;
+    out center;
   `;
 
   try {
@@ -697,15 +711,52 @@ async function fetchRealHospitals(searchLat, searchLon) {
     if (data.elements && data.elements.length > 0) {
       directoryPanel.innerHTML = "";
 
-      data.elements.forEach((place) => {
+      // 🏆 THE REAL FIX 2: ALWAYS CALCULATE DISTANCE FROM GPS IF AVAILABLE 🏆
+      const originLat = userActualLat !== null ? userActualLat : searchLat;
+      const originLon = userActualLon !== null ? userActualLon : searchLon;
+
+      // 1. Calculate Distances
+      let facilities = data.elements.map((place) => {
         const placeLat = place.lat || (place.center && place.center.lat);
         const placeLon = place.lon || (place.center && place.center.lon);
-        const name = place.tags.name || "Regional Medical Center";
+        const distance = calculateDistance(
+          originLat,
+          originLon,
+          placeLat,
+          placeLon,
+        );
+        return { place, placeLat, placeLon, distance };
+      });
 
-        // Determine facility type for the filters
+      // 2. Filter out bad data
+      facilities = facilities.filter((item) => {
+        if (!item.place.tags.name) return false;
+        const nameLow = item.place.tags.name.toLowerCase();
+        if (
+          nameLow.includes("clinic") ||
+          nameLow.includes("dispensary") ||
+          nameLow.includes("pharmacy")
+        )
+          return false;
+        return true;
+      });
+
+      // 3. Sort by closest distance
+      facilities.sort((a, b) => a.distance - b.distance);
+
+      // 4. Take the top 15 remaining major hospitals
+      const topFacilities = facilities.slice(0, 15);
+
+      if (topFacilities.length === 0) {
+        directoryPanel.innerHTML = `<div style="padding:20px; text-align:center; font-weight: 600;">No major hospitals found within 25 km. Try a different city.</div>`;
+        return;
+      }
+
+      topFacilities.forEach((item) => {
+        const { place, placeLat, placeLon, distance } = item;
+        const name = place.tags.name;
+
         const isER = place.tags.emergency === "yes";
-        const isClinic = place.tags.amenity === "clinic";
-
         let facilityCategory = "general";
         let typeText = "🏥 General Hospital";
         let emergencyTag = `<span class="status-badge open">🟢 General Care</span>`;
@@ -714,31 +765,13 @@ async function fetchRealHospitals(searchLat, searchLon) {
           facilityCategory = "emergency";
           typeText = "🚨 Trauma & Emergency";
           emergencyTag = `<span class="status-badge emergency">🚨 ER Available</span>`;
-        } else if (
-          isClinic ||
-          name.toLowerCase().includes("clinic") ||
-          name.toLowerCase().includes("pediatric")
-        ) {
-          facilityCategory = "clinic";
-          typeText = "🩺 Specialized Clinic";
-          emergencyTag = `<span class="status-badge open" style="background:#e0f2fe; color:#0284c7;">🩺 Outpatient</span>`;
         }
 
-        const originLat = userActualLat !== null ? userActualLat : searchLat;
-        const originLon = userActualLon !== null ? userActualLon : searchLon;
+        const formattedDistance = distance.toFixed(1);
 
-        // Math: Calculate distance and format to KM
-        const distance = calculateDistance(
-          originLat,
-          originLon,
-          placeLat,
-          placeLon,
-        ).toFixed(1);
-
-        // FIX 3: Official Google Maps Directions API URL
+        // 🏆 THE REAL FIX 3: OFFICIAL GOOGLE MAPS NAVIGATION URL 🏆
+        // 🏆 FIX 3: Official Google Maps Directions API
         const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${placeLat},${placeLon}`;
-
-        // FIX 4: Add data-category attribute for the filter buttons
         const cardHTML = `
           <div class="facility-card" data-category="${facilityCategory}">
             <div class="card-header">
@@ -747,7 +780,7 @@ async function fetchRealHospitals(searchLat, searchLon) {
             </div>
             <p class="facility-type">${typeText}</p>
             <div class="card-footer">
-              <span class="distance">🚗 ~${distance} km away</span>
+              <span class="distance">🚗 ~${formattedDistance} km away</span>
               <a href="${directionsUrl}" target="_blank" class="card-action-btn" style="text-decoration:none; text-align:center; display:inline-block;">Get Directions</a>
             </div>
           </div>
@@ -755,16 +788,16 @@ async function fetchRealHospitals(searchLat, searchLon) {
         directoryPanel.innerHTML += cardHTML;
       });
     } else {
-      directoryPanel.innerHTML = `<div style="padding:20px; text-align:center; font-weight: 600;">No major hospitals found within 15 km of this location.</div>`;
+      directoryPanel.innerHTML = `<div style="padding:20px; text-align:center; font-weight: 600;">No major hospitals found within 25 km of this location.</div>`;
     }
   } catch (err) {
     directoryPanel.innerHTML = `<div style="padding:20px; color: #ef4444;">Error syncing with global hospital database.</div>`;
   }
 }
 
-// --- FIX 2: HAVERSINE FORMULA WITH ROAD-ROUTING MULTIPLIER ---
+// --- HAVERSINE FORMULA WITH ROAD-ROUTING MULTIPLIER ---
 function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Radius of the Earth in KILOMETERS
+  const R = 6371;
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
   const a =
@@ -774,16 +807,12 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const straightLineDistance = R * c;
-
-  // Multiply by 1.35 to account for actual road networks (driving distance vs flying distance)
-  return straightLineDistance * 1.35;
+  return R * c * 1.35;
 }
 
 // --- FILTER CHIP LOGIC ---
 document.querySelectorAll(".filter-chips .chip").forEach((chip) => {
   chip.addEventListener("click", (e) => {
-    // 1. Visually update active button
     document
       .querySelectorAll(".filter-chips .chip")
       .forEach((c) => c.classList.remove("active"));
@@ -792,7 +821,6 @@ document.querySelectorAll(".filter-chips .chip").forEach((chip) => {
     const filterText = e.target.innerText.toLowerCase();
     const allCards = document.querySelectorAll(".facility-card");
 
-    // 2. Hide/Show cards based on category
     allCards.forEach((card) => {
       const category = card.getAttribute("data-category");
       if (filterText.includes("all")) {
@@ -810,6 +838,32 @@ document.querySelectorAll(".filter-chips .chip").forEach((chip) => {
   });
 });
 
+// --- NEW BUTTON LOGIC: "NEAR ME" ---
+const btnMyLocation = document.getElementById("btn-my-location");
+if (btnMyLocation) {
+  btnMyLocation.addEventListener("click", () => {
+    if (navigator.geolocation) {
+      document.getElementById("map-search-input").value = "";
+      document.getElementById("map-container").innerHTML =
+        `<p style="font-weight: 600; color: var(--brand-blue);">📍 Requesting GPS Access...</p>`;
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          userActualLat = position.coords.latitude;
+          userActualLon = position.coords.longitude;
+          window.findNearestHospitals("");
+        },
+        (error) => {
+          alert(
+            "Location access denied. Please type your city in the search bar.",
+          );
+          window.findNearestHospitals();
+        },
+      );
+    }
+  });
+}
+
 // --- INITIALIZE GEOLOCATION ON PAGE LOAD ---
 window.addEventListener("DOMContentLoaded", () => {
   if (navigator.geolocation) {
@@ -817,10 +871,9 @@ window.addEventListener("DOMContentLoaded", () => {
       (position) => {
         userActualLat = position.coords.latitude;
         userActualLon = position.coords.longitude;
-        window.findNearestHospitals();
+        window.findNearestHospitals("");
       },
       (error) => {
-        console.warn("Location denied. Waiting for manual input.");
         window.findNearestHospitals();
       },
     );

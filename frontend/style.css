@@ -211,10 +211,12 @@ body {
 }
 
 /* --- APP CONTAINER (The actual chat interface) --- */
+/* --- APP CONTAINER (The actual chat interface) --- */
 .app-container {
   width: 100%;
   max-width: 1200px;
-  height: 750px;
+  height: 90vh; /* 🟢 INCREASED: Was 750px, now scales to 90% of your screen height */
+  min-height: 720px; /* 🟢 Ensures it never gets too squished on small laptops */
   background: var(--bg-white);
   border: 1px solid var(--border-light);
   border-radius: 24px;

@@ -649,13 +649,13 @@ window.findNearestHospitals = async function (manualLocation = "") {
         const searchLat = geoData[0].lat;
         const searchLon = geoData[0].lon;
 
-        // 🏆 THE REAL FIX 1: OFFICIAL GOOGLE MAPS EMBED URL 🏆
-        // 🏆 FIX 1: Corrected $ signs and standard Maps URL
+        // 🏆 Official Maps Embed URL 🏆
         const mapQuery = encodeURIComponent(`hospitals near ${manualLocation}`);
         const mapUrl = `https://maps.google.com/maps?q=${mapQuery}&t=&z=13&ie=UTF8&iwloc=&output=embed`;
+
         mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" style="border:0; border-radius: 12px;" src="${mapUrl}"></iframe>`;
 
-        fetchRealHospitals(searchLat, searchLon);
+        fetchRealHospitals(searchLat, searchLon, false);
       } else {
         directoryPanel.innerHTML = `<div style="padding: 20px; text-align: center;">City not found. Please try a different name or zip code.</div>`;
         mapContainer.innerHTML = `<p style="color: #ef4444; font-weight: 600;">❌ Map unavailable.</p>`;
@@ -666,17 +666,35 @@ window.findNearestHospitals = async function (manualLocation = "") {
     return;
   }
 
-  // 🟢 PATH B: GPS Auto-Location
-  // 🟢 PATH B: GPS Auto-Location
+  // 🟢 PATH B: GPS Auto-Location (Using YOUR Reverse Geocoding Idea!)
   if (userActualLat !== null && userActualLon !== null) {
-    // 🏆 FIX 2: Corrected $ signs and standard Maps URL
-    const mapQuery = encodeURIComponent(
-      `hospitals near ${userActualLat},${userActualLon}`,
-    );
-    const mapUrl = `https://maps.google.com/maps?q=${mapQuery}&t=&z=13&ie=UTF8&iwloc=&output=embed`;
-    mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" style="border:0; border-radius: 12px;" src="${mapUrl}"></iframe>`;
+    try {
+      // 1. Ask OpenStreetMap what city/town your GPS coordinates are in
+      const reverseGeoResponse = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${userActualLat}&lon=${userActualLon}`,
+      );
+      const reverseGeoData = await reverseGeoResponse.json();
 
-    fetchRealHospitals(userActualLat, userActualLon);
+      // 2. Extract the name of the city, town, or village
+      const address = reverseGeoData.address || {};
+      const detectedCity =
+        address.city ||
+        address.town ||
+        address.village ||
+        address.suburb ||
+        address.county ||
+        "my location";
+
+      // 3. Pass that extracted city name to the Google Map iframe!
+      const mapQuery = encodeURIComponent(`hospitals near ${detectedCity}`);
+      const mapUrl = `https://maps.google.com/maps?q=${mapQuery}&t=&z=13&ie=UTF8&iwloc=&output=embed`;
+
+      mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" style="border:0; border-radius: 12px;" src="${mapUrl}"></iframe>`;
+
+      fetchRealHospitals(userActualLat, userActualLon, true);
+    } catch (error) {
+      directoryPanel.innerHTML = `<div style="padding: 20px; color: #ef4444;">Error finding your exact city.</div>`;
+    }
   } else {
     mapContainer.innerHTML = `<p style="color: #ef4444; font-weight: 600;">❌ Please click "Near Me" or type your City above.</p>`;
     directoryPanel.innerHTML = `<div style="padding: 20px; text-align:center;">Location access is required to show nearby facilities automatically.<br><br><b>Please click "Near Me" or search above.</b></div>`;
@@ -719,13 +737,30 @@ async function fetchRealHospitals(searchLat, searchLon) {
       let facilities = data.elements.map((place) => {
         const placeLat = place.lat || (place.center && place.center.lat);
         const placeLon = place.lon || (place.center && place.center.lon);
-        const distance = calculateDistance(
+
+        // KEEP DISTANCE: Calculates how far it is from your physical GPS body
+        const displayDistance = calculateDistance(
           originLat,
           originLon,
           placeLat,
           placeLon,
         );
-        return { place, placeLat, placeLon, distance };
+
+        // 🏆 NEW SORT DISTANCE: Calculates how far it is from the Searched City Center
+        const sortDistance = calculateDistance(
+          searchLat,
+          searchLon,
+          placeLat,
+          placeLon,
+        );
+
+        return {
+          place,
+          placeLat,
+          placeLon,
+          distance: displayDistance,
+          sortDistance: sortDistance,
+        };
       });
 
       // 2. Filter out bad data
@@ -741,8 +776,8 @@ async function fetchRealHospitals(searchLat, searchLon) {
         return true;
       });
 
-      // 3. Sort by closest distance
-      facilities.sort((a, b) => a.distance - b.distance);
+      // 3. 🏆 THE FIX: Sort by the city center, NOT your GPS distance!
+      facilities.sort((a, b) => a.sortDistance - b.sortDistance);
 
       // 4. Take the top 15 remaining major hospitals
       const topFacilities = facilities.slice(0, 15);
@@ -807,7 +842,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c * 1.35;
+  return R * c * 1.45;
 }
 
 // --- FILTER CHIP LOGIC ---

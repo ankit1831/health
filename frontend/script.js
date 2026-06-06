@@ -126,20 +126,89 @@ function addHTMLMessage(htmlContent) {
   saveSession(); // 🟢 NEW: Auto-save on dynamic UI elements (like the PDF button)
 }
 
-function addLoadingBubble() {
+// --- UPDATED LOADING & UI LOCKING ---
+function addLoadingBubble(isPredicting = false) {
   const id = "loading-" + Date.now();
   const msgDiv = document.createElement("div");
   msgDiv.id = id;
   msgDiv.classList.add("message", "ai-message");
-  msgDiv.innerHTML = `<div class="message-content" style="color: var(--text-muted); font-style: italic;">Typing...</div>`;
+
+  // 1. HARD LOCK THE INPUT AREA
+  const chatInput = document.querySelector("input[type='text'], #chat-input");
+  const bottomBtns = document.querySelectorAll("button"); // Grabs all buttons (Send, Predict, etc.)
+  if (chatInput) chatInput.disabled = true;
+  bottomBtns.forEach((btn) => (btn.disabled = true)); // Lock everything down
+
+  // 2. STANDARD CHAT: Fast, simple loading
+  if (!isPredicting) {
+    msgDiv.innerHTML = `
+      <div class="message-content" style="background: transparent; color: #94a3b8; font-style: italic; padding: 8px 16px;">
+        Analyzing...
+      </div>
+    `;
+    chatBox.appendChild(msgDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    return id;
+  }
+
+  // 3. PREDICT MODE: Sleek Fading Text (Gemini/ChatGPT Style)
+  msgDiv.innerHTML = `
+    <div class="message-content" style="background: transparent; padding: 8px 16px;">
+      <span id="thinking-text-${id}" style="color: #0ea5e9; font-weight: 500; font-style: italic; transition: opacity 0.4s ease-in-out; opacity: 1;">
+        Reviewing patient transcript...
+      </span>
+    </div>
+  `;
   chatBox.appendChild(msgDiv);
   chatBox.scrollTop = chatBox.scrollHeight;
+
+  const steps = [
+    "Reviewing patient transcript...",
+    "Extracting clinical entities...",
+    "Querying medical vector database...",
+    "Generating differential diagnosis...",
+  ];
+  let stepIdx = 0;
+
+  // The fading loop
+  const interval = setInterval(() => {
+    const textElement = document.getElementById(`thinking-text-${id}`);
+    if (textElement) {
+      // Fade out
+      textElement.style.opacity = 0;
+
+      // Wait 400ms for the fade to finish, change text, and fade back in
+      setTimeout(() => {
+        stepIdx = (stepIdx + 1) % steps.length;
+        if (textElement) {
+          textElement.innerText = steps[stepIdx];
+          textElement.style.opacity = 1;
+        }
+      }, 400);
+    } else {
+      clearInterval(interval);
+    }
+  }, 1800); // Stays on screen for 1.8 seconds before swapping
+
+  msgDiv.dataset.intervalId = interval;
   return id;
 }
 
 function removeLoadingBubble(id) {
   const el = document.getElementById(id);
-  if (el) el.remove();
+  if (el) {
+    if (el.dataset.intervalId) clearInterval(el.dataset.intervalId);
+    el.remove();
+  }
+
+  // RE-ENABLE THE INPUT AREA
+  const chatInput = document.querySelector("input[type='text'], #chat-input");
+  const bottomBtns = document.querySelectorAll("button");
+  if (chatInput) {
+    chatInput.disabled = false;
+    chatInput.focus();
+  }
+  bottomBtns.forEach((btn) => (btn.disabled = false));
 }
 
 // --- RESET LOGIC ---
@@ -151,6 +220,7 @@ document.getElementById("btn-restart").addEventListener("click", () => {
             </div>
         </div>
     `;
+
   diagnosticQuestionCount = 0;
   diagnosticQuestionLimit = 6;
   fullTranscript = "";
@@ -181,7 +251,7 @@ window.runDiagnosticPrediction = async function () {
   document.getElementById("btn-send").disabled = true;
   userInput.disabled = true;
 
-  const loadingId = addLoadingBubble();
+  const loadingId = addLoadingBubble(true);
   document.getElementById("btn-predict").style.display = "none";
 
   try {
@@ -254,8 +324,8 @@ window.runDiagnosticPrediction = async function () {
                 <button class="tab-btn" onclick="switchTab(this, 'clin-${uniqueId}')">⚕️ Clinical Report</button>
             </div>
             
-            <div id="pat-${uniqueId}" class="tab-content active">${data.patient_friendly_report.replace(/\n/g, "<br>")}</div>
-            <div id="clin-${uniqueId}" class="tab-content hidden">${data.clinical_report.replace(/\n/g, "<br>")}</div>
+            <div id="pat-${uniqueId}" class="tab-content active">${window.highlightMedicalTerms(data.patient_friendly_report, data.extracted_symptoms).replace(/\n/g, "<br>")}</div>
+            <div id="clin-${uniqueId}" class="tab-content hidden">${window.highlightMedicalTerms(data.clinical_report, data.extracted_symptoms).replace(/\n/g, "<br>")}</div>
             
             <div class="action-chips" style="margin-top: 25px; display: flex; gap: 8px; flex-wrap: wrap;">
                 <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('user-input').value='What are my treatment options?'; document.getElementById('btn-send').click();">Treatment Options</button>
@@ -357,7 +427,12 @@ btnSend.addEventListener("click", async () => {
             </div>
         </div>
     `;
-    setTimeout(() => addHTMLMessage(promptHTML), 400);
+    setTimeout(() => {
+      addHTMLMessage(promptHTML);
+      // LOCK THE UI
+      document.getElementById("user-input").disabled = true;
+      document.getElementById("btn-send").disabled = true;
+    }, 400);
     return;
   }
 
@@ -473,7 +548,12 @@ btnSend.addEventListener("click", async () => {
                 </div>
             </div>
         `;
-        setTimeout(() => addHTMLMessage(promptHTML), 600);
+        setTimeout(() => {
+          addHTMLMessage(promptHTML);
+          // LOCK THE UI
+          document.getElementById("user-input").disabled = true;
+          document.getElementById("btn-send").disabled = true;
+        }, 600);
       }
     }
   } catch (error) {
@@ -500,6 +580,23 @@ window.switchTab = function (btn, tabId) {
   btn.classList.add("active");
 };
 
+// --- NLP HIGHLIGHTER UTILITY ---
+window.highlightMedicalTerms = function (text, symptomsList) {
+  if (!text || !symptomsList || symptomsList.length === 0) return text;
+  let newText = text;
+  symptomsList.forEach((symp) => {
+    if (symp.trim().length > 2) {
+      // Prevents highlighting small words like 'a' or 'is'
+      // Finds the exact symptom word and wraps it in a blue highlighted span
+      const regex = new RegExp(`\\b(${symp.trim()})\\b`, "gi");
+      newText = newText.replace(
+        regex,
+        `<strong style="color: var(--brand-blue); background: #e0f2fe; padding: 2px 4px; border-radius: 4px;">$1</strong>`,
+      );
+    }
+  });
+  return newText;
+};
 userInput.addEventListener("input", function () {
   this.style.height = "auto";
   this.style.height = this.scrollHeight + "px";
@@ -515,8 +612,14 @@ userInput.addEventListener("keydown", (e) => {
 window.extendChat = function (boxId) {
   document.getElementById(boxId).style.display = "none";
   diagnosticQuestionLimit += 4;
-  document.getElementById("user-input").value =
-    "I have more symptoms I want to discuss.";
+
+  // UNLOCK THE UI
+  const userInput = document.getElementById("user-input");
+  userInput.disabled = false;
+  document.getElementById("btn-send").disabled = false;
+  userInput.focus();
+
+  userInput.value = "I have more symptoms I want to discuss.";
   document.getElementById("btn-send").click();
 };
 

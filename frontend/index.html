@@ -45,31 +45,141 @@
       </div>
     </section>
 
-    <section id="about" class="about-section">
-      <h2>Built for Precision. Powered by AI.</h2>
-      <div class="features-grid">
-        <div class="feature-card">
-          <h3>🧠 Agentic RAG Translation</h3>
-          <p>
-            Translates layman symptoms into precise clinical terminology using a
-            70B LLM and Semantic Hybrid Search.
-          </p>
-        </div>
-        <div class="feature-card">
-          <h3>📊 Naive Bayes Math Engine</h3>
-          <p>
-            Calculates exact probabilities across 800+ symptoms using
-            epidemiological baselines and age-gated filters.
-          </p>
-        </div>
-        <div class="feature-card">
-          <h3>🩺 Chief Medical Officer LLM</h3>
-          <p>
-            A final AI supervisor that audits the math engine to prevent
-            hallucinations and generates safe, patient-friendly reports.
-          </p>
-        </div>
+    <section id="about" class="architecture-section">
+      <div class="section-header">
+        <h2 class="graph-main-title">Computational Data Pipeline</h2>
+        <p class="graph-subtitle">
+          Hover over the nodes to view the real-time execution protocols of the
+          triage engine.
+        </p>
       </div>
+
+      <div class="graph-container">
+        <svg
+          class="graph-svg-canvas"
+          viewBox="0 0 1200 450"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            id="core-backbone"
+            d="M 50 225 C 300 -50, 300 450, 600 250 C 900 50, 900 450, 1150 225"
+            stroke="#14532d"
+            stroke-width="5"
+            stroke-linecap="round"
+          />
+          <path
+            d="M 230 115 C 230 115, 600 250, 600 250"
+            stroke="#16a34a"
+            stroke-width="2"
+            stroke-dasharray="5 5"
+            opacity="0.6"
+          />
+          <path
+            d="M 600 250 C 600 250, 970 340, 970 340"
+            stroke="#16a34a"
+            stroke-width="2"
+            stroke-dasharray="5 5"
+            opacity="0.6"
+          />
+          <path
+            d="M 230 115 C 450 -20, 750 0, 970 340"
+            stroke="#15803d"
+            stroke-width="1.5"
+            stroke-dasharray="8 4"
+            opacity="0.4"
+          />
+
+          <circle r="7" fill="#22c55e" class="pulse-particle">
+            <animateMotion
+              dur="6s"
+              repeatCount="indefinite"
+              path="M 50 225 C 300 -50, 300 450, 600 250 C 900 50, 900 450, 1150 225"
+            />
+          </circle>
+          <circle r="5" fill="#4ade80" class="pulse-particle" begin="2s">
+            <animateMotion
+              dur="6s"
+              repeatCount="indefinite"
+              path="M 50 225 C 300 -50, 300 450, 600 250 C 900 50, 900 450, 1150 225"
+            />
+          </circle>
+          <circle r="6" fill="#10b981" class="pulse-particle" begin="4s">
+            <animateMotion
+              dur="6s"
+              repeatCount="indefinite"
+              path="M 50 225 C 300 -50, 300 450, 600 250 C 900 50, 900 450, 1150 225"
+            />
+          </circle>
+        </svg>
+
+        <div class="graph-nodes-layer">
+          
+          <div class="matrix-node" style="left: 11%; top: 80px;">
+            <div class="matrix-ring"></div>
+            <div class="matrix-core">👤</div>
+            <div class="matrix-meta-tag">
+              <span class="m-title">Patient Ingestion</span>
+              <span class="m-tech">REST / Gateway</span>
+            </div>
+            <div class="matrix-hover-box">
+              <h5>Payload Context</h5>
+              <p>• Intercepts raw user chat arrays</p>
+              <p>• Extracts age & sex demographics</p>
+              <p>• Instantiates secure memory block</p>
+              <p>• Packages downstream payload</p>
+            </div>
+          </div>
+
+          <div class="matrix-node" style="left: 31.5%; top: 210px;">
+            <div class="matrix-ring"></div>
+            <div class="matrix-core">🧠</div>
+            <div class="matrix-meta-tag">
+              <span class="m-title">Agentic RAG</span>
+              <span class="m-tech">HuggingFace Vectors</span>
+            </div>
+            <div class="matrix-hover-box">
+              <h5>Semantic Alignment</h5>
+              <p>• Funnels text via deep encoders</p>
+              <p>• Maps layperson to clinical terms</p>
+              <p>• Executes similarity matching</p>
+              <p>• Injects context into runtime</p>
+            </div>
+          </div>
+
+          <div class="matrix-node" style="left: 51%; top: 120px;">
+            <div class="matrix-ring"></div>
+            <div class="matrix-core">📊</div>
+            <div class="matrix-meta-tag">
+              <span class="m-title">Math Engine</span>
+              <span class="m-tech">Naive Bayes Classifier</span>
+            </div>
+            <div class="matrix-hover-box">
+              <h5>Matrix Processing</h5>
+              <p>• Creates Boolean sparse matrices</p>
+              <p>• Evaluates 800+ condition weights</p>
+              <p>• Applies demographic filter blocks</p>
+              <p>• Constructs differential diagnosis</p>
+            </div>
+          </div>
+
+          <div class="matrix-node" style="left: 69%; top: 200px;">
+            <div class="matrix-ring"></div>
+            <div class="matrix-core">🩺</div>
+            <div class="matrix-meta-tag">
+              <span class="m-title">CMO Audit</span>
+              <span class="m-tech">Groq / Llama 3 70B</span>
+            </div>
+            <div class="matrix-hover-box">
+              <h5>Validation Layer</h5>
+              <p>• Feeds metrics to structural prompts</p>
+              <p>• Triggers Groq LPU fast-inference</p>
+              <p>• Applies defensive semantic checks</p>
+              <p>• Formats dual-view triage report</p>
+            </div>
+          </div>
+
+        </div>
     </section>
 
     <div id="triage-modal" class="modal-overlay hidden">

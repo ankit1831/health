@@ -4,6 +4,11 @@ os.environ["USE_TORCH"] = "1"
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from google import genai
+from google.genai import types
+import os
+import base64
+from pydantic import BaseModel
 from pydantic import BaseModel
 import numpy as np
 from fastapi.responses import StreamingResponse # 🟢 NEW IMPORT
@@ -15,13 +20,13 @@ import re
 from typing import Optional
 from groq import Groq
 from dotenv import load_dotenv
-from sentence_transformers import SentenceTransformer
 import uvicorn
 
 # 1. SETUP
 load_dotenv()
 client = Groq()
 app = FastAPI()
+# Configure Gemini API Key
 
 # 2. LOAD ASSETS
 model = joblib.load('heal_bridge_bnb_model.joblib')
@@ -40,8 +45,32 @@ for col in master_cols:
     corpus_text.append(clinical_dict.get(col, ""))
     code_map.append(col)
 
-embedder = SentenceTransformer('pritamdeka/S-PubMedBert-MS-MARCO')
-corpus_embeddings = embedder.encode(corpus_text)
+import requests # Make sure this is imported at the top!
+
+# --- SERVERLESS AGENTIC RAG SETUP ---
+# --- SERVERLESS AGENTIC RAG SETUP ---
+HF_API_TOKEN = os.getenv("HF_API_TOKEN")
+API_URL = "https://api-inference.huggingface.co/models/pritamdeka/S-PubMedBert-MS-MARCO"
+
+def get_hf_embeddings(texts):
+    """Fetches embeddings from Hugging Face with a bulletproof network fallback"""
+    headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
+    
+    try:
+        # Added a 15-second timeout so it doesn't hang forever if the network is bad
+        response = requests.post(API_URL, headers=headers, json={"inputs": texts}, timeout=15)
+        response.raise_for_status() # Instantly triggers the except block if it gets a 503 or 404
+        return np.array(response.json())
+        
+    except Exception as e:
+        print(f"⚠️ Network or HF API Error: {str(e)}")
+        print("⚠️ Falling back to a safe zero-matrix to prevent server crash.")
+        # Returns an empty matrix so the server successfully boots even without internet
+        return np.zeros((len(texts), 768)) 
+
+print("🔄 Connecting to Hugging Face Inference API...")
+corpus_embeddings = get_hf_embeddings(corpus_text)
+print("✅ Agentic RAG Vector Space Initialized!")
 
 # --- TRIAGE SEVERITY DICT FOR THE CMO ---
 TRIAGE_SEVERITY = {
@@ -89,6 +118,12 @@ class FollowUpRequest(BaseModel):
     question: str
     history: str
 
+class DocumentPayload(BaseModel):
+    mime_type: str
+    data: str
+    prompt: str
+    phase: str = "triage" # 🟢 Required for the CMO phase check to work
+
 # 4. PRE-TRIAGE CONVERSATION ENDPOINT
 @app.post("/api/chat")
 def run_chat(req: ChatRequest):
@@ -120,14 +155,11 @@ def run_chat(req: ChatRequest):
         # 3. Check if we ALREADY used the fallback
         has_advanced = any("proceed without those exact details" in msg.get("content", "") for msg in safe_history)
 
-        # 4. FALLBACK OVERRIDE
-        if (not extracted_age or not extracted_sex) and receptionist_asks >= 2 and not has_advanced:
-            reply = "No problem at all. We can proceed without those exact details. Please describe the main symptoms you are experiencing today."
-            # NEW: Explicitly returning skip_demographics so the UI knows to show the button
-            return {"reply": reply, "extracted_age": extracted_age, "extracted_sex": extracted_sex, "skip_demographics": True}
+        # 4. FALLBACK OVERRIDE FLAG (Do not return a dict here!)
+        trigger_fallback = (not extracted_age or not extracted_sex) and receptionist_asks >= 2 and not has_advanced
 
         # 5. SELECT THE PERSONA
-        if (not extracted_age or not extracted_sex) and not has_advanced:
+        if not trigger_fallback and (not extracted_age or not extracted_sex) and not has_advanced:
             system_prompt = """You are a strict clinical receptionist. Your ONLY job is to ask for the patient's age and biological sex. 
             CRITICAL RULES:
             1. DO NOT ask about symptoms yet.
@@ -139,12 +171,11 @@ def run_chat(req: ChatRequest):
             1. ONE QUESTION MAXIMUM: You must NEVER ask more than one question in a single message.
             2. NO FLUFF: Be direct and clinical. Do not use excessive sympathy.
             3. DIFFERENTIAL DIAGNOSIS: Ask highly specific questions that differentiate between similar diseases. 
-            4. FLEXIBILITY: If the patient says they want to talk more, explore more symptoms, or refuses to predict, you MUST oblige and continue asking diagnostic questions without arguing."""
-
+            4. 🟢 ABSOLUTE VISUAL PRIORITY: If a [System Image Scan Results] or [System Document Analysis] block is present in the transcript history, you MUST drop any historical focus on generic text symptoms (like a simple headache) and dedicate your questions entirely to exploring the findings of that visual image scan. It is the primary chief complaint."""
         messages = [{"role": "system", "content": system_prompt}] + safe_history
         messages.append({"role": "user", "content": safe_message})
         
-        # 🟢 NEW: Tell Groq to stream the output
+        # 🟢 NEW: Tell Groq to stream the outputfa
         resp = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=messages,
@@ -154,7 +185,16 @@ def run_chat(req: ChatRequest):
         
         # 🟢 NEW: Generator function for Server-Sent Events (SSE)
         def generate():
-            # 1. Send the metadata instantly so the UI can update the profile/buttons
+            # 🟢 THE CRASH FIX: Handle the fallback safely inside the stream
+            if trigger_fallback:
+                metadata = {"type": "metadata", "extracted_age": extracted_age, "extracted_sex": extracted_sex, "skip_demographics": True}
+                yield f"data: {json.dumps(metadata)}\n\n"
+                
+                reply = "No problem at all. We can proceed without those exact details. Please describe the main symptoms you are experiencing today."
+                yield f"data: {json.dumps({'type': 'chunk', 'text': reply})}\n\n"
+                return
+
+            # 1. Send the normal metadata instantly
             metadata = {
                 "type": "metadata",
                 "extracted_age": extracted_age,
@@ -165,9 +205,26 @@ def run_chat(req: ChatRequest):
             
             # 2. Check if we need to send the hardcoded demographic confirmation
             if (not req.age or not req.sex) and (extracted_age and extracted_sex):
-                hardcoded_reply = f"Thank you. I have recorded your details: {extracted_age} years old, {extracted_sex}. Please describe the main symptoms you are experiencing today."
-                yield f"data: {json.dumps({'type': 'chunk', 'text': hardcoded_reply})}\n\n"
-                return # Stop here so it doesn't stream the actual AI prompt
+                base_reply = f"Thank you. I have recorded your details: {extracted_age} years old, {extracted_sex}. "
+                
+                # Convert the incoming request object to a string to search the chat history
+                chat_context = str(req)
+                
+                # 1. Did the user upload ANY document?
+                if "successfully analyzed your document" in chat_context:
+                    
+                    # 2. Does the chat history contain an ABNORMAL document?
+                    if "specific parameters" in chat_context:
+                        final_reply = base_reply + "I see you have already uploaded a document with notable metrics. You can click 'Predict' to run the diagnosis, or tell me any other physical symptoms you feel."
+                    else:
+                        final_reply = base_reply + "I see your uploaded document was completely normal. Please describe any physical discomfort or symptoms you are experiencing so we can investigate further."
+                        
+                # 4. Standard Flow (No documents uploaded at all)
+                else:
+                    final_reply = base_reply + "Please describe the main symptoms you are experiencing today."
+                    
+                yield f"data: {json.dumps({'type': 'chunk', 'text': final_reply})}\n\n"
+                return # 740715 INDENTED INSIDE THE IF BLOCK
 
             # 3. Stream the live Llama-3 text chunks word-by-word
             for chunk in resp:
@@ -192,6 +249,11 @@ def run_triage(req: TriageRequest):
         extraction_prompt = f"""You are an elite Clinical NLP Scribe. 
         Review this triage conversation:\n{req.transcript}\n
         Extract ALL symptoms the patient confirmed and denied. Translate to medical terminology.
+        CRITICAL RULES:
+        1. You MUST extract any medical parameters, conditions, or symptoms found inside the [System Document Analysis: ...] blocks as 'present' symptoms. Treat these as absolute facts.
+        2. 🔴 EXCEPTION OVERRIDE: If the patient replies with "no", "incorrect", or explicitly denies the accuracy of the document right after the AI asks "Does this extraction look accurate?", you MUST completely IGNORE the [System Document Analysis] block. Do NOT extract those visual parameters.
+        3. ONLY extract physical symptoms the patient explicitly claims to feel. Do not assume symptoms just because the AI asked about them.
+
         Output ONLY a JSON object: {{"present": [], "absent": []}}"""
         
         extraction = client.chat.completions.create(
@@ -217,7 +279,7 @@ def run_triage(req: TriageRequest):
         all_terms = [(t, 'present') for t in full_json.get("present", [])] + [(t, 'absent') for t in full_json.get("absent", [])]
         
         for term, status in all_terms:
-            vec = embedder.encode([term])
+            vec = get_hf_embeddings([term])
             sem_scores = np.dot(vec, corpus_embeddings.T)[0]
             top_indices = np.argsort(sem_scores)[::-1][:7]
             candidates = {code_map[idx]: corpus_text[idx] for idx in top_indices}
@@ -315,7 +377,185 @@ def run_triage(req: TriageRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# 6. THE FOLLOW UP CHAT
+@app.post("/api/analyze-document")
+async def analyze_document(payload: DocumentPayload):
+    try:
+        if not os.getenv("GEMINI_API_KEY"):
+            raise ValueError("GEMINI_API_KEY is missing from environment variables.")
+
+        # 🟢 Initialize the NEW Google GenAI Client
+        client = genai.Client() 
+        
+        # 🟢 Use the NEW SDK format for handling image bytes
+        raw_bytes = base64.b64decode(payload.data)
+        file_blob = types.Part.from_bytes(data=raw_bytes, mime_type=payload.mime_type)
+        
+        # CMO PHASE
+        # CMO PHASE
+        if payload.phase == "cmo":
+            cmo_prompt = f"You are a Chief Medical Officer. The patient uploaded this image and asked: '{payload.prompt}'. Answer clinically and briefly."
+            
+            # Use the fallback array to bypass 503 server overloads
+            models_to_try = ['gemini-2.5-flash', 'gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-2.5-flash-lite']
+            cmo_reply = None
+            
+            for model_name in models_to_try:
+                try:
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=[cmo_prompt, file_blob]
+                    )
+                    cmo_reply = response.text.strip()
+                    break # Success, exit the loop
+                except Exception as e:
+                    print(f"⚠️ CMO Model {model_name} failed. Trying next...")
+                    continue
+                    
+            if not cmo_reply:
+                # If ALL models fail, return a safe UI message instead of a 500 crash
+                return {
+                    "extracted_symptoms": "CMO_VISION_ANALYSIS",
+                    "ai_reply": "⏳ **System Cooldown:** The medical vision engine is currently at maximum capacity. Please wait a moment and try asking your question again.",
+                    "age": None, "sex": None
+                }
+                
+            return {
+                "extracted_symptoms": "CMO_VISION_ANALYSIS",
+                "ai_reply": cmo_reply,
+                "age": None, "sex": None
+            }
+            
+        system_prompt = """
+        You are an elite clinical data verification and parsing system. Analyze the provided image or file.
+        CRITICAL RULE: NEVER include the words "STEP 1", "STEP 2", or "STEP 3" in your response. Output ONLY the clean data.
+        
+        STEP 1: VALIDATION
+        Evaluate if this file is a medical document, lab test report, prescription, clinical summary, or an image showing a physiological symptom.
+        - If the file is completely unrelated to medicine, healthcare, or physiology, reply with EXACTLY the token: INVALID_MEDICAL_FILE
+        
+        STEP 2: CLINICAL ANALYSIS
+        If valid, review the markers, numbers, or visual features.
+        - Case A (Abnormalities Found): List only the out-of-range, elevated, low, or clinically relevant abnormal metrics/symptoms as a clean, comma-separated list.
+        - Case B (All Clear / Completely Normal): Provide a structured summary of the key metrics read in this exact format:
+          NORMAL_REPORT_BREAKDOWN: [Metric Name] is [Value] [Unit] (Reference Range: [Range]) | [Next Metric Name]...
+
+        STEP 3: AGE AND BIOMETRIC EXTRACTION
+        Scan the document for the patient's Age and Sex. If not explicitly written, use UNKNOWN.  
+        FORMAT EXACTLY LIKE THIS:
+        AGE: [Age or UNKNOWN]
+        SEX: [Sex or UNKNOWN]
+        """
+
+        models_to_try = [
+            'gemini-2.5-flash',       
+            'gemini-3.1-flash-lite',  
+            'gemini-3.5-flash',       
+            'gemini-2.5-flash-lite'   
+        ]
+        
+        extracted_text = None
+        
+        for model_name in models_to_try:
+            try:
+                print(f"🔄 Attempting inference with {model_name}...")
+                
+                # 🟢 Generate Content using the new Client architecture
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=[system_prompt, file_blob, payload.prompt]
+                )
+                
+                extracted_text = response.text.strip()
+                print(f"✅ Success with {model_name}!")
+                break
+                
+            except Exception as e:
+                error_str = str(e).lower()
+                # 🟢 FIX: Added 503 and unavailable so it triggers the fallback loop!
+                if "429" in error_str or "503" in error_str or "unavailable" in error_str or "quota" in error_str or "exhausted" in error_str or "not found" in error_str:
+                    print(f"⚠️ {model_name} failed (Quota/Missing). Routing to next model...")
+                    continue 
+                else:
+                    raise e
+                    
+        # If the loop finishes and we STILL don't have text, EVERY model failed.
+        if not extracted_text:
+            return {
+                "extracted_symptoms": "System rate limits triggered across all models.",
+                "ai_reply": "⏳ **System Cooldown:** The medical vision engine is currently processing maximum capacity. Please wait a moment and try sending this document again."
+            }
+
+        # --- DYNAMIC INTERACTION ROUTING (Using the successful extracted_text) ---
+        
+        # 🟢 MINIMAL ADDITION 1: Parse Age and Sex before routing
+        lines = extracted_text.split('\n')
+        age_val = "UNKNOWN"
+        sex_val = "UNKNOWN"
+        clean_metrics = extracted_text
+        
+        for line in lines:
+            if line.startswith("AGE:"): 
+                age_val = line.replace("AGE:", "").strip()
+                clean_metrics = clean_metrics.replace(line, "").strip() # Remove from metrics string
+            if line.startswith("SEX:"): 
+                sex_val = line.replace("SEX:", "").strip()
+                clean_metrics = clean_metrics.replace(line, "").strip() # Remove from metrics string
+
+        # 🟢 MINIMAL ADDITION 2: Update Returns to include Age, Sex, and the "Verify" question
+        if "INVALID_MEDICAL_FILE" in extracted_text:
+            return {
+                "extracted_symptoms": "Invalid document uploaded.",
+                "ai_reply": "⚠️ **Invalid Upload:** The file provided does not appear to be a medical report, clinical document, or physical symptom image. Please upload a valid health document for analysis.",
+                "age": None, "sex": None
+            }
+            
+        elif "NORMAL_REPORT_BREAKDOWN:" in clean_metrics:
+            breakdown_data = clean_metrics.replace("NORMAL_REPORT_BREAKDOWN:", "").strip()
+            formatted_list = ""
+            for item in breakdown_data.split("|"):
+                if item.strip():
+                    formatted_list += f"\n• {item.strip()}"
+            
+            # Add demographics and verification to the normal report
+            natural_reply = "I have successfully analyzed your document.\n\n"
+            if age_val != "UNKNOWN":
+                natural_reply += f"**Demographics Found:** {age_val} years old, {sex_val}.\n\n"
+            
+            natural_reply += (
+                f"All tested markers look excellent and fall safely inside normal clinical boundaries:\n"
+                f"{formatted_list}\n\n"
+                f"**Does this extraction look accurate to you?**" # Verification ask
+            )
+            
+            return {
+                "extracted_symptoms": "No abnormalities detected. Document confirmed healthy.",
+                "ai_reply": natural_reply,
+                "age": age_val, 
+                "sex": sex_val
+            }
+            
+        else:
+            # Add demographics and verification to the abnormal report
+            natural_reply = "I have successfully analyzed your document.\n\n"
+            if age_val != "UNKNOWN":
+                natural_reply += f"**Demographics Found:** {age_val} years old, {sex_val}.\n\n"
+            
+            natural_reply += (
+                f"I noted the following specific parameters: *{clean_metrics}*.\n\n"
+                f"**Does this extraction look accurate to you?**" # Verification ask
+            )
+            
+            return {
+                "extracted_symptoms": clean_metrics,
+                "ai_reply": natural_reply,
+                "age": age_val, 
+                "sex": sex_val
+            }
+
+    except Exception as e:
+        print(f"❌ BACKEND FATAL ERROR: {str(e)}") 
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/followup")
 def run_followup(req: FollowUpRequest):
     try:

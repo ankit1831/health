@@ -218,34 +218,41 @@
             </div>
           </div>
 
-          <div class="input-area" id="input-area">
-            <textarea
-              id="user-input"
-              rows="1"
-              placeholder="Type your message here..."
-              autocomplete="off"
-            ></textarea>
-            <button id="btn-send" class="btn send-btn">Send ➔</button>
+          <div class="input-area-wrapper" style="display: flex; flex-direction: column; background: white; border-top: 1px solid var(--border-light);">
+            
+            <div id="file-preview-container" style="display: none; padding: 10px 16px; border-bottom: 1px dashed var(--border-light); align-items: center; gap: 10px; width: 100%; box-sizing: border-box;">
+              <div id="file-preview-icon" style="font-size: 1.2rem; flex-shrink: 0;">Doc</div>
+              <div style="flex: 1; min-width: 0;">
+                <p id="file-preview-name" style="font-size: 0.85rem; color: var(--text-dark); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0;">report.pdf</p>
+              </div>
+              <button id="btn-remove-file" style="background: none; border: none; color: #ef4444; font-size: 1.5rem; cursor: pointer; padding: 0 4px; line-height: 1; flex-shrink: 0;">&times;</button>
+            </div>
 
-            <button
-              id="btn-predict"
-              class="btn"
-              style="
-                background: var(--brand-gradient);
-                color: white;
-                display: none;
-                height: 56px;
-                padding: 0 24px;
-                border-radius: 12px;
-                font-weight: 600;
-                border: none;
-                cursor: pointer;
-                white-space: nowrap;
-                box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
-              "
-            >
-              🩺 Predict
-            </button>
+            <div class="input-area" id="input-area" style="border-top: none;">
+              <input type="file" id="file-upload" accept="image/jpeg, image/png, application/pdf" style="display: none;">
+              
+              <button id="btn-attach" style="background: transparent; color: #64748b; padding: 0 12px; border: none; cursor: pointer; transition: color 0.2s; display: flex; align-items: center; justify-content: center; height: 56px; flex-shrink: 0;" title="Upload Clinical Report or Image">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                </svg>
+              </button>
+
+              <textarea
+                id="user-input"
+                rows="1"
+                placeholder="Type your message or upload a document..."
+                autocomplete="off"
+              ></textarea>
+              <button id="btn-send" class="btn send-btn">Send ➔</button>
+
+              <button
+                id="btn-predict"
+                class="btn"
+                style="background: var(--brand-gradient); color: white; display: none; height: 56px; padding: 0 24px; border-radius: 12px; font-weight: 600; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);"
+              >
+                🩺 Predict
+              </button>
+            </div>
           </div>
         </main>
       </div>
@@ -345,6 +352,20 @@
         </div>
       </div>
     </section>
+    <div id="quality-gate-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+      <div style="background: white; padding: 30px; border-radius: 16px; max-width: 420px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;">
+        <div style="font-size: 2.5rem; margin-bottom: 10px;">⚠️</div>
+        <h3 style="margin-top: 0; color: #0f172a; font-size: 1.25rem;">Upload Guidelines</h3>
+        <p style="color: #475569; font-size: 0.95rem; line-height: 1.5; margin-bottom: 15px;">For safety and precision, please upload only <strong>typed lab results, clinical summaries, or clear images of physical symptoms</strong>.</p>
+        <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 10px; border-radius: 8px; margin-bottom: 20px;">
+          <p style="color: #ef4444; font-size: 0.85rem; margin: 0; font-weight: 600;">Handwritten notes are strictly prohibited as they can lead to dangerous AI misinterpretations.</p>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+          <button id="btn-cancel-upload" style="padding: 10px 16px; border: 1px solid #cbd5e1; background: white; color: #475569; border-radius: 8px; cursor: pointer; font-weight: 600; flex: 1;">Cancel</button>
+          <button id="btn-accept-upload" style="padding: 10px 16px; background: #0ea5e9; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; flex: 1; box-shadow: 0 4px 6px rgba(14, 165, 233, 0.2);">I Understand</button>
+        </div>
+      </div>
+    </div>
 
     <footer id="contact">
       <div class="footer-content">

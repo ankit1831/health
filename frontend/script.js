@@ -1,6 +1,63 @@
 const chatBox = document.getElementById("chat-box");
 const userInput = document.getElementById("user-input");
 const btnSend = document.getElementById("btn-send");
+// --- UPLOAD STATE TRACKERS ---
+const fileInput = document.getElementById("file-upload");
+const btnAttach = document.getElementById("btn-attach");
+const previewContainer = document.getElementById("file-preview-container");
+const previewName = document.getElementById("file-preview-name");
+const btnRemoveFile = document.getElementById("btn-remove-file");
+
+let currentUploadedFile = null;
+
+// 🟢 QUALITY GATE LOGIC
+const qualityModal = document.getElementById("quality-gate-modal");
+const btnCancelUpload = document.getElementById("btn-cancel-upload");
+const btnAcceptUpload = document.getElementById("btn-accept-upload");
+
+btnAttach.addEventListener("click", () => {
+  qualityModal.style.display = "flex";
+});
+
+btnCancelUpload.addEventListener("click", () => {
+  qualityModal.style.display = "none";
+});
+
+btnAcceptUpload.addEventListener("click", () => {
+  qualityModal.style.display = "none";
+  fileInput.click(); // Only open file picker AFTER they agree
+});
+
+// Handle file selection
+fileInput.addEventListener("change", function () {
+  if (this.files && this.files[0]) {
+    const file = this.files[0];
+
+    // Safety check: Limit size to 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File is too large. Please upload a file smaller than 5MB.");
+      this.value = "";
+      return;
+    }
+
+    currentUploadedFile = file;
+    previewName.innerText = file.name;
+
+    // Change icon based on type
+    const icon = document.getElementById("file-preview-icon");
+    if (file.type.startsWith("image/")) icon.innerText = "🖼️";
+    else icon.innerText = "📄";
+
+    previewContainer.style.display = "flex";
+  }
+});
+
+// Handle file removal
+btnRemoveFile.addEventListener("click", () => {
+  fileInput.value = "";
+  currentUploadedFile = null;
+  previewContainer.style.display = "none";
+});
 
 // --- STATE TRACKERS ---
 let diagnosticQuestionCount = 0;
@@ -104,12 +161,22 @@ function addMessage(text, sender) {
   );
   const contentDiv = document.createElement("div");
   contentDiv.classList.add("message-content");
-  contentDiv.innerHTML = text.replace(/\n/g, "<br>");
+
+  // 🟢 FIX 2: MARKDOWN PARSER (Handles Bold, Italic, and Newlines)
+  let formattedText = text.replace(/\n/g, "<br>");
+  formattedText = formattedText.replace(
+    /\*\*(.*?)\*\*/g,
+    "<strong>$1</strong>",
+  ); // Bold
+  formattedText = formattedText.replace(/\*(.*?)\*/g, "<em>$1</em>"); // Italic
+
+  contentDiv.innerHTML = formattedText;
+
   msgDiv.appendChild(contentDiv);
   chatBox.appendChild(msgDiv);
   chatBox.scrollTop = chatBox.scrollHeight;
 
-  saveSession(); // 🟢 NEW: Auto-save on every standard message
+  saveSession();
 }
 
 function addHTMLMessage(htmlContent) {
@@ -243,7 +310,7 @@ document.getElementById("btn-restart").addEventListener("click", () => {
 // --- PREDICT LOGIC ---
 window.runDiagnosticPrediction = async function () {
   if (!isReceptionistPassed) {
-    addMessage("Please complete the initial details first.", "ai");
+    addMessage("Please complete the initial details first(Age,Sex).", "ai");
     return;
   }
   // 🟢 DISABLE BUTTONS TO PREVENT DOUBLE-CLICK CRASHES 🟢
@@ -364,17 +431,186 @@ document
   .getElementById("btn-predict")
   .addEventListener("click", window.runDiagnosticPrediction);
 
-// --- SEND LOGIC ---
+/// --- SEND LOGIC ---
 btnSend.addEventListener("click", async () => {
   const text = userInput.value.trim();
-  if (!text) return;
-  // 🟢 NEW: DISABLE BUTTONS 🟢
+
+  // 🟢 NEW: Check if there is text OR a file to send
+  if (!text && !currentUploadedFile) return;
+
   btnSend.disabled = true;
   document.getElementById("btn-predict").disabled = true;
   userInput.disabled = true;
 
-  const wordCount = text.split(/\s+/).filter((word) => word.length > 0).length;
+  // 1. Handle File Uploads First
+  if (currentUploadedFile) {
+    const loadingId = addLoadingBubble();
+    const file = currentUploadedFile;
+    const fileText = text || "Please analyze this medical document."; // Fallback text
 
+    addMessage(`📎 Uploaded: ${file.name}\n${text}`, "user");
+    userInput.value = "";
+    userInput.style.height = "auto";
+
+    // Clear the UI attachment
+    currentUploadedFile = null;
+    previewContainer.style.display = "none";
+    fileInput.value = "";
+
+    try {
+      // Convert file to Base64
+      const base64Data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(",")[1]);
+        reader.onerror = (error) => reject(error);
+        reader.readAsDataURL(file);
+      });
+
+      // Send to the dedicated Gemini parsing endpoint
+      // Send to the dedicated Gemini parsing endpoint
+      const response = await fetch("/api/analyze-document", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mime_type: file.type,
+          data: base64Data,
+          prompt: fileText,
+          phase: isTriageComplete ? "cmo" : "triage", // 🟢 FIX: Uses your actual state variable
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.detail || "Server rejected the document.");
+      }
+
+      const data = await response.json();
+      removeLoadingBubble(loadingId);
+
+      // IF WE ARE IN CMO PHASE: Just chat normally about the image
+      if (typeof isTriageComplete !== "undefined" && isTriageComplete) {
+        addMessage(data.ai_reply, "ai");
+        return;
+      }
+
+      // Auto-Fill Demographics and synchronize states
+      let metadataString = "";
+      if (data.age && data.age !== "UNKNOWN") {
+        patientAge = data.age;
+        const uiAge = document.getElementById("ui-age");
+        if (uiAge) uiAge.innerText = patientAge;
+      }
+      if (data.sex && data.sex !== "UNKNOWN") {
+        patientSex = data.sex;
+        const uiSex = document.getElementById("ui-sex");
+        if (uiSex) uiSex.innerText = patientSex;
+      }
+
+      // If both are present from document or manual input, clear the receptionist phase
+      if (patientAge && patientSex) {
+        isReceptionistPassed = true;
+        metadataString = `[System Patient Metadata: Age ${patientAge}, Sex ${patientSex}]\n`;
+      }
+
+      // 🟢 THE AMNESIA PROTOCOL (Only run if receptionist phase was already done)
+      if (
+        typeof isReceptionistPassed !== "undefined" &&
+        isReceptionistPassed &&
+        apiChatHistory.length > 1
+      ) {
+        if (apiChatHistory[apiChatHistory.length - 1].role === "assistant") {
+          apiChatHistory.pop();
+        }
+        let lines = fullTranscript
+          .split("\n")
+          .filter((line) => line.trim() !== "");
+        if (lines.length > 0) lines.pop();
+        fullTranscript = lines.join("\n") + "\n";
+      }
+
+      // Inject data into BOTH the text channel and Llama's memory
+      fullTranscript +=
+        metadataString +
+        `[System Document Analysis: ${data.extracted_symptoms}]\n`;
+
+      apiChatHistory.push({
+        role: "assistant",
+        content: `[System Image Scan Results]: ${data.extracted_symptoms}. Demographics: ${patientAge} ${patientSex}. I asked the patient if this looks accurate.`,
+      });
+
+      // 🟢 FORCE PREDICT BUTTON VISIBILITY
+      // Check if your check function exists, or force style layout directly
+      const btnPredict = document.getElementById("btn-predict"); // adjust to match your HTML ID
+      if (btnPredict) {
+        if ((patientAge && patientSex) || data.extracted_symptoms) {
+          btnPredict.style.display = "block"; // Or replace with your function name like updateUI()
+        }
+      }
+
+      addMessage(data.ai_reply, "ai");
+      // 🟢 FIX 1: INJECT VISION DATA INTO LLAMA-3's MEMORY
+      apiChatHistory.push({
+        role: "assistant",
+        content: `[System Image Scan Results]: ${data.extracted_symptoms}. ${data.ai_reply}`,
+      });
+      // ... existing verify button code continues below ...
+
+      // Check valid/healthy status based on your existing logic
+      const isInvalid =
+        data.extracted_symptoms.includes("Invalid") ||
+        data.extracted_symptoms.includes("System rate limit");
+      const isHealthy = data.extracted_symptoms.includes(
+        "No abnormalities detected",
+      );
+
+      // 🟢 Inject the Human-in-the-Loop "Verify" Button
+      if (!isInvalid) {
+        const verifyBtn = document.createElement("button");
+        verifyBtn.innerText = "✅ Yes, data is correct";
+        verifyBtn.style.cssText =
+          "background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 8px; margin-top: 10px; cursor: pointer; font-weight: bold; display: block;";
+
+        verifyBtn.onclick = function () {
+          this.style.display = "none"; // hide button after click
+          addMessage("Yes, data is correct.", "user");
+
+          // Now we unlock the Predict button based on Health status!
+          if (!isHealthy) {
+            document.getElementById("btn-predict").style.display = "block";
+            addMessage(
+              "Great. You can click 'Predict' to run the diagnosis, or tell me any additional symptoms.",
+              "ai",
+            );
+          } else {
+            addMessage(
+              "Since the report is normal, please type out any physical symptoms you are experiencing so we can investigate.",
+              "ai",
+            );
+          }
+        };
+
+        // Append button to the last AI message safely
+        const messages = document
+          .getElementById("chat-box")
+          .getElementsByClassName("bot-message");
+        if (messages.length > 0) {
+          messages[messages.length - 1].appendChild(verifyBtn);
+        }
+      }
+    } catch (error) {
+      removeLoadingBubble(loadingId);
+      addMessage(`❌ **Upload Error:** ${error.message}`, "ai");
+    } finally {
+      btnSend.disabled = false;
+      document.getElementById("btn-predict").disabled = false;
+      userInput.disabled = false;
+      userInput.focus();
+    }
+    return; // Stop the function here so it doesn't trigger standard chat
+  }
+
+  // 2. Standard Text Chat (Your existing logic continues here...)
+  const wordCount = text.split(/\s+/).filter((word) => word.length > 0).length;
   addMessage(text, "user");
   userInput.value = "";
   userInput.style.height = "auto";
@@ -409,12 +645,22 @@ btnSend.addEventListener("click", async () => {
     return;
   }
 
+  // ... existing code ...
   fullTranscript += `Patient: ${text}\n`;
+
+  // 🟢 FIX: Ensure Predict button is ALWAYS visible once patient demographics are captured,
+  // even if they manually type "yes" instead of clicking the Verify button!
+  if (isReceptionistPassed) {
+    document
+      .getElementById("btn-predict")
+      .style.setProperty("display", "inline-block", "important");
+  }
 
   if (
     isReceptionistPassed &&
     diagnosticQuestionCount >= diagnosticQuestionLimit
   ) {
+    // ... rest of your existing interceptor code ...
     const uniqueId = Date.now();
     const promptHTML = `
         <div id="intercept-${uniqueId}" style="margin-top: 15px; padding: 20px; background: white; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
@@ -445,7 +691,7 @@ btnSend.addEventListener("click", async () => {
       body: JSON.stringify({
         message: text,
         history: apiChatHistory,
-        age: patientAge,
+        age: patientAge ? parseInt(patientAge, 10) : null, // 🟢 FIX: Safely forces it to be an Integer
         sex: patientSex,
       }),
     });

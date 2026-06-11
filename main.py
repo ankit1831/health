@@ -354,8 +354,10 @@ def run_triage(req: TriageRequest):
         {{
             "engine_was_correct": true/false,
             "final_diagnosis": "The final verified disease name",
-            "patient_friendly_report": "Write a concise, 2-paragraph explanation following the rules above. Keep it factual but reassuring.",
-            "clinical_report": "Write a detailed 1-paragraph medical summary for the attending physician."
+            "severity": You MUST evaluate the danger level and output ONLY ONE of these exact words: "RED" (Life-threatening/ER), "YELLOW" (Urgent/Doctor within 48h), or "GREEN" (Minor/Home care).
+            "patient_friendly_report": "Write a concise, 2-paragraph explanation following the rules above. Keep it factual but reassuring. And keep it in simple terms that a patient can easily understand. Avoid medical jargon.",
+            "clinical_report": "Write a detailed 2-paragraph medical summary for the attending physician."
+
         }}"""
         
         cmo_resp = client.chat.completions.create(
@@ -367,9 +369,12 @@ def run_triage(req: TriageRequest):
         
         # Intercept response to inject the programmatic triage severity tag for front-end rendering
         output_payload = json.loads(cmo_resp.choices[0].message.content)
-        output_payload["severity"] = severity 
         
-        # 🟢 NEW: Pass the extracted symptoms down for the PDF Export
+        # 🟢 THE FIX: Delete the old overwrite, and enforce the LLM's dynamic severity
+        # We use .get() to pull the severity Llama-3 chose, defaulting to GREEN if it glitches
+        output_payload["severity"] = output_payload.get("severity", "GREEN").upper()
+        
+        # Pass the extracted symptoms down for the PDF Export
         output_payload["extracted_symptoms"] = full_json.get('present', []) 
         
         return output_payload
@@ -564,7 +569,10 @@ def run_followup(req: FollowUpRequest):
         1. CONVERSATIONAL TONE: Speak naturally and directly. DO NOT use overly emotional or dramatic sympathy (e.g., no "I'm so sorry to hear that"). Be reassuring but factual.
         2. NO DRUG PRESCRIPTIONS: Do NOT recommend specific prescription drug names or dosages.
         3. EXPLAIN CLEARLY: Answer their question simply and accurately.
-        4. THE DOCTOR PIVOT: Always gently remind them to consult a human doctor for an official treatment plan."""
+        4. THE DOCTOR PIVOT: Always gently remind them to consult a human doctor for an official treatment plan.
+        5. USE BULLET POINTS: Break down instructions, symptoms, or remedies into clear, scannable bullet points or paragraphs.
+        6. USE HIGHLIGHTING: **Bold** key medical terms, medications, and critical warnings.
+        7. BE CONCISE: Get straight to the point. Maximum 1-2 short paragraphs/bullet sections."""
         
         resp = client.chat.completions.create(
             model="llama-3.3-70b-versatile",

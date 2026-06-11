@@ -101,7 +101,7 @@ function saveSession() {
     currentDiagnosis,
     followUpHistory,
     isReceptionistPassed,
-    // We also save the exact HTML of the chat box so it instantly looks right!
+    currentReportData,
     chatHTML: chatBox.innerHTML,
   };
   localStorage.setItem("healBridgeSession", JSON.stringify(sessionData));
@@ -122,7 +122,7 @@ function loadSession() {
     currentDiagnosis = data.currentDiagnosis || "";
     followUpHistory = data.followUpHistory || "";
     isReceptionistPassed = data.isReceptionistPassed || false;
-
+    currentReportData = data.currentReportData || null;
     // 2. Restore the Chat HTML
     if (data.chatHTML) {
       chatBox.innerHTML = data.chatHTML;
@@ -868,25 +868,19 @@ window.extendChat = function (boxId) {
   userInput.value = "I have more symptoms I want to discuss.";
   document.getElementById("btn-send").click();
 };
-
 // ==========================================
-// 🟢 NEW: PDF GENERATION LOGIC 🟢
+// 🟢 THE NATIVE BROWSER PDF ENGINE 🟢
 // ==========================================
 window.generatePDF = function () {
-  if (!currentReportData) return;
+  if (!currentReportData) {
+    alert("No report data found. Please run a prediction first.");
+    return;
+  }
 
-  // 1. Create a beautiful, hidden HTML template for the PDF
-  const pdfContainer = document.createElement("div");
-  pdfContainer.style.padding = "40px";
-  pdfContainer.style.fontFamily =
-    "'Helvetica Neue', Helvetica, Arial, sans-serif";
-  pdfContainer.style.color = "#0f172a";
-
+  // 1. Data Prep
   const dateStr = new Date().toLocaleDateString();
-
-  // Format the symptoms nicely
   const symptomsList =
-    currentReportData.symptoms.length > 0
+    currentReportData.symptoms && currentReportData.symptoms.length > 0
       ? currentReportData.symptoms
           .map(
             (s) =>
@@ -895,19 +889,44 @@ window.generatePDF = function () {
           .join("")
       : "<li>As described in transcript</li>";
 
-  // Match the severity colors
   let severityLabel = "Standard Care";
-  let severityColor = "#00C851"; // Green
+  let severityColor = "#00C851";
+  let severityBg = "#e5ffe5"; // Light green background for print
   if (currentReportData.severity === "RED") {
     severityLabel = "CRITICAL EMERGENCY";
     severityColor = "#ff4444";
+    severityBg = "#ffe5e5";
   } else if (currentReportData.severity === "YELLOW") {
     severityLabel = "URGENT CONDITION";
     severityColor = "#ffbb33";
+    severityBg = "#fff8e5";
   }
 
-  // Build the layout
-  pdfContainer.innerHTML = `
+  const clinicalRep = (
+    currentReportData.clinicalReport || "No clinical report generated."
+  ).replace(/\n/g, "<br>");
+  const patientRep = (
+    currentReportData.patientReport || "No patient report generated."
+  ).replace(/\n/g, "<br>");
+  const diag = currentReportData.diagnosis
+    ? String(currentReportData.diagnosis)
+    : "Unknown Diagnosis";
+  const patAge = currentReportData.age || "Unknown";
+  const patSex = currentReportData.sex || "Unknown";
+
+  // 2. Create a dedicated container meant ONLY for printing
+  const printContainer = document.createElement("div");
+  printContainer.id = "native-print-report";
+  printContainer.style.fontFamily =
+    "'Helvetica Neue', Helvetica, Arial, sans-serif";
+  printContainer.style.color = "#0f172a";
+  printContainer.style.backgroundColor = "white";
+  printContainer.style.width = "100%";
+  printContainer.style.maxWidth = "800px";
+  printContainer.style.margin = "0 auto";
+
+  // Note: -webkit-print-color-adjust forces the browser to print background colors perfectly
+  printContainer.innerHTML = `
       <div style="border-bottom: 3px solid #0ea5e9; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
           <div>
               <h1 style="color: #0ea5e9; margin: 0; font-size: 32px; letter-spacing: -1px;">Heal Bridge</h1>
@@ -918,12 +937,12 @@ window.generatePDF = function () {
           </div>
       </div>
 
-      <div style="display: flex; justify-content: space-between; margin-bottom: 30px; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 30px; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
           <div>
               <p style="margin: 0 0 5px 0; color: #64748b; text-transform: uppercase; font-size: 12px; font-weight: bold;">Patient Profile</p>
-              <p style="margin: 0; font-size: 16px; font-weight: bold;">Age: ${currentReportData.age} &nbsp;|&nbsp; Sex: ${currentReportData.sex}</p>
+              <p style="margin: 0; font-size: 16px; font-weight: bold;">Age: ${patAge} &nbsp;|&nbsp; Sex: ${patSex}</p>
           </div>
-          <div style="text-align: right;">
+          <div style="text-align: right; background: ${severityBg}; padding: 10px; border-radius: 6px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
               <p style="margin: 0 0 5px 0; color: #64748b; text-transform: uppercase; font-size: 12px; font-weight: bold;">Triage Severity</p>
               <p style="margin: 0; font-weight: bold; font-size: 16px; color: ${severityColor};">${severityLabel}</p>
           </div>
@@ -931,7 +950,7 @@ window.generatePDF = function () {
 
       <div style="margin-bottom: 30px;">
           <h2 style="font-size: 16px; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 15px;">Primary Diagnosis</h2>
-          <h3 style="font-size: 26px; color: #0ea5e9; margin: 0;">${currentReportData.diagnosis}</h3>
+          <h3 style="font-size: 26px; color: #0ea5e9; margin: 0;">${diag}</h3>
       </div>
 
       <div style="margin-bottom: 30px;">
@@ -943,16 +962,12 @@ window.generatePDF = function () {
 
       <div style="margin-bottom: 30px;">
           <h2 style="font-size: 16px; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 15px;">Clinical Report (For Attending Physician)</h2>
-          <p style="font-size: 14px; line-height: 1.6;">
-              ${currentReportData.clinicalReport.replace(/\n/g, "<br>")}
-          </p>
+          <p style="font-size: 14px; line-height: 1.6;">${clinicalRep}</p>
       </div>
 
       <div style="margin-bottom: 30px;">
           <h2 style="font-size: 16px; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 15px;">Patient Summary</h2>
-          <p style="font-size: 14px; line-height: 1.6;">
-              ${currentReportData.patientReport.replace(/\n/g, "<br>")}
-          </p>
+          <p style="font-size: 14px; line-height: 1.6;">${patientRep}</p>
       </div>
 
       <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #94a3b8; line-height: 1.5;">
@@ -960,17 +975,49 @@ window.generatePDF = function () {
       </div>
   `;
 
-  // 2. Configure html2pdf to generate high-quality output
-  const opt = {
-    margin: [0.5, 0.5, 0.5, 0.5], // half-inch margins
-    filename: `HealBridge_Report_${currentReportData.diagnosis.replace(/\s+/g, "_")}.pdf`,
-    image: { type: "jpeg", quality: 1.0 },
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-  };
+  document.body.appendChild(printContainer);
 
-  // 3. Generate and trigger download
-  html2pdf().set(opt).from(pdfContainer).save();
+  // 3. 🟢 THE MAGIC CSS 🟢
+  // When the print dialog opens, this CSS hides the entire website (navbar, chat, buttons)
+  // and ONLY allows the browser to see the beautiful report container we just made.
+  const printStyles = document.createElement("style");
+  printStyles.id = "native-print-styles";
+  printStyles.innerHTML = `
+    @media print {
+        /* Hide everything on the entire website */
+        body > *:not(#native-print-report):not(script):not(style) {
+            display: none !important;
+        }
+        /* Show ONLY the report */
+        #native-print-report {
+            display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        /* Force background colors to print, remove browser margins */
+        body {
+            background: white !important;
+            margin: 0 !important;
+        }
+        @page {
+            margin: 0.5in;
+        }
+    }
+  `;
+  document.head.appendChild(printStyles);
+
+  // 4. Trigger the indestructible Native Browser Print Engine
+  window.print();
+
+  // 5. Clean up the DOM completely once the user closes the print window
+  setTimeout(() => {
+    document.body.removeChild(printContainer);
+    document.head.removeChild(printStyles);
+  }, 1000);
 };
 // ==========================================
 // 🟢 GEOLOCATION & REAL DYNAMIC DIRECTORY 🟢

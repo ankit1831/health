@@ -1153,6 +1153,10 @@ async function fetchRealHospitals(searchLat, searchLon) {
   try {
     const response = await fetch("https://overpass-api.de/api/interpreter", {
       method: "POST",
+      headers: {
+        "User-Agent": "HealBridge-Medical-Triage-App/1.0", // Required identification
+        Referer: "https://healbridge-seven.vercel.app/", // Required identification
+      },
       body: query,
     });
 

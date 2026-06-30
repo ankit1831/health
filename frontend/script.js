@@ -2399,7 +2399,24 @@ document
   .getElementById("btn-generate-pdf")
   .addEventListener("click", window.generatePDF);
 
-document.getElementById("btn-mobile-menu").addEventListener("click", () => {
-  const tools = document.getElementById("desktop-tools");
-  tools.classList.toggle("active");
+// Toggle the menu when clicking the ⋮ button
+const mobileToggleBtn = document.getElementById("btn-mobile-toggle");
+if (mobileToggleBtn) {
+  mobileToggleBtn.addEventListener("click", function (e) {
+    e.stopPropagation(); // Stop click from immediately closing the menu
+    document.querySelector(".tool-dock").classList.toggle("show-menu");
+  });
+}
+
+// Automatically close the menu if the user clicks anywhere else on the screen
+document.addEventListener("click", function (e) {
+  const dock = document.querySelector(".tool-dock");
+  const toggleBtn = document.getElementById("btn-mobile-toggle");
+
+  // If the dock is open, and they didn't click inside the dock or on the toggle button
+  if (dock && dock.classList.contains("show-menu")) {
+    if (!dock.contains(e.target) && e.target !== toggleBtn) {
+      dock.classList.remove("show-menu");
+    }
+  }
 });

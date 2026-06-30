@@ -2011,50 +2011,61 @@ body {
   scroll-margin-top: 90px; /* Adjust this value based on your navbar height */
 }
 
-/* --- Desktop Default (Keeps your original layout) --- */
-.mobile-menu-btn {
+/* --- DESKTOP RULES (Base) --- */
+/* Hide the mobile toggle button on desktop */
+.mobile-toggle-btn {
   display: none;
 }
 
-@media (max-width: 600px) {
-  /* 1. Hide the tool-dock by default on mobile */
-  #desktop-tools {
-    display: none;
+/* --- MOBILE RULES (Only applies to screens under 768px) --- */
+@media (max-width: 768px) {
+  /* 1. Show the Toggle Button */
+  .mobile-toggle-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    color: #475569;
+    border: none;
+    border-radius: 8px;
+    padding: 0 15px;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-right: 8px;
+  }
+
+  /* 2. Convert Tool Dock into a Floating Menu */
+  .tool-dock {
+    display: none; /* Hidden by default */
     position: absolute;
-    bottom: 70px;
+    bottom: 80px; /* Float above the input bar */
     left: 10px;
     background: white;
     padding: 10px;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    flex-direction: column; /* Stack vertically */
+    gap: 12px;
+    z-index: 9999;
   }
 
-  /* 2. When the menu is toggled 'active', show it */
-  #desktop-tools.active {
-    display: flex;
-    flex-direction: column; /* Stack tools vertically */
+  /* 3. Class added by JavaScript to show the menu */
+  .tool-dock.show-menu {
+    display: flex !important;
   }
 
-  /* 3. Show the toggle button on mobile */
-  .mobile-menu-btn {
-    display: block;
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    padding: 0 10px;
+  /* 4. Hide the Emojis */
+  .hide-on-mobile {
+    display: none !important;
   }
 
-  /* 4. Compact the Send/Predict buttons for mobile */
-  .btn {
-    padding: 8px 10px !important;
-    font-size: 13px !important;
-  }
-
-  /* 5. Ensure the input area takes remaining space */
-  #user-input {
-    flex: 1;
-    min-width: 0; /* Prevents overflow */
+  /* 5. Shrink Send and Predict Buttons */
+  #btn-send,
+  #btn-predict {
+    padding: 8px 12px !important; /* Less padding */
+    font-size: 13px !important; /* Smaller font */
+    height: 40px !important; /* Shorter height */
+    min-width: unset !important; /* Remove any forced width */
   }
 }

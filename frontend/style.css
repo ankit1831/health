@@ -2011,49 +2011,50 @@ body {
   scroll-margin-top: 90px; /* Adjust this value based on your navbar height */
 }
 
-/* Mobile Optimizations */
+/* --- Desktop Default (Keeps your original layout) --- */
+.mobile-menu-btn {
+  display: none;
+}
+
 @media (max-width: 600px) {
-  /* Hide/Show Menu */
-  .utility-menu {
-    display: none; /* Hidden by default on mobile */
+  /* 1. Hide the tool-dock by default on mobile */
+  #desktop-tools {
+    display: none;
     position: absolute;
     bottom: 70px;
     left: 10px;
     background: white;
     padding: 10px;
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    gap: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
   }
 
-  .utility-menu.active {
-    display: flex; /* Shown when toggled */
-  }
-
-  .mobile-only-btn {
-    display: block; /* Show toggle button */
-    background: #f1f5f9;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-  }
-
-  /* Shrink Main Buttons */
-  #btn-send,
-  #btn-predict {
-    padding: 8px 12px !important;
-    font-size: 12px !important;
-    white-space: nowrap;
-  }
-}
-
-/* Hide toggle button on desktop */
-@media (min-width: 601px) {
-  .mobile-only-btn {
-    display: none;
-  }
-  .utility-menu {
+  /* 2. When the menu is toggled 'active', show it */
+  #desktop-tools.active {
     display: flex;
+    flex-direction: column; /* Stack tools vertically */
+  }
+
+  /* 3. Show the toggle button on mobile */
+  .mobile-menu-btn {
+    display: block;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0 10px;
+  }
+
+  /* 4. Compact the Send/Predict buttons for mobile */
+  .btn {
+    padding: 8px 10px !important;
+    font-size: 13px !important;
+  }
+
+  /* 5. Ensure the input area takes remaining space */
+  #user-input {
+    flex: 1;
+    min-width: 0; /* Prevents overflow */
   }
 }

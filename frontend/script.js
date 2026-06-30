@@ -2399,7 +2399,7 @@ document
   .getElementById("btn-generate-pdf")
   .addEventListener("click", window.generatePDF);
 
-document.getElementById("btn-toggle-menu").addEventListener("click", () => {
-  const menu = document.getElementById("utility-menu");
-  menu.classList.toggle("active");
+document.getElementById("btn-mobile-menu").addEventListener("click", () => {
+  const tools = document.getElementById("desktop-tools");
+  tools.classList.toggle("active");
 });

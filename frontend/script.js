@@ -420,7 +420,7 @@ window.runDiagnosticPrediction = async function () {
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg> Listen
                 </button>
 
-                <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; background: #1e293b; color: white; cursor: pointer; transition: 0.2s;" onclick="generatePDF()">Download Report</button>
+                <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; background: #1e293b; color: white; cursor: pointer; transition: 0.2s;" id="btn-generate-pdf">Download Report</button>
                 <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; background: #ef4444; color: white; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('triage-modal').classList.add('hidden'); document.getElementById('locate').scrollIntoView({ behavior: 'smooth' }); window.findNearestHospitals();">View Nearby Hospitals</button>
             </div>
         </div>
@@ -1151,14 +1151,9 @@ async function fetchRealHospitals(searchLat, searchLon) {
   `;
 
   try {
-    const response = await fetch("https://overpass-api.de/api/interpreter", {
-      method: "POST",
-      headers: {
-        Accept: "*/*",
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: query,
-    });
+    const response = await fetch(
+      `${BACKEND_URL}/api/hospitals?lat=${searchLat}&lon=${searchLon}`,
+    );
 
     const data = await response.json();
 
@@ -2400,3 +2395,6 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+document
+  .getElementById("btn-generate-pdf")
+  .addEventListener("click", window.generatePDF);

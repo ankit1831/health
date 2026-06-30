@@ -22,6 +22,7 @@ from typing import Optional
 from groq import Groq
 from dotenv import load_dotenv
 import uvicorn
+import requests
 
 # 1. SETUP
 load_dotenv()
@@ -411,6 +412,25 @@ def run_triage(req: TriageRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/api/hospitals")
+def get_hospitals(lat: float, lon: float):
+    overpass_url = "https://overpass-api.de/api/interpreter"
+    # This is the exact query you were using
+    query = f"""
+    [out:json][timeout:25];
+    (
+      node["amenity"="hospital"](around:25000,{lat},{lon});
+      way["amenity"="hospital"](around:25000,{lat},{lon});
+      node["healthcare"="hospital"](around:25000,{lat},{lon});
+    );
+    out center;
+    """
+    try:
+        response = requests.post(overpass_url, data=query, headers={"User-Agent": "HealBridge-App/1.0"})
+        return response.json()
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.post("/api/analyze-document")
 async def analyze_document(payload: DocumentPayload):

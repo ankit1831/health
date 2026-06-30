@@ -1262,6 +1262,7 @@ async function fetchRealHospitals(searchLat, searchLon) {
       directoryPanel.innerHTML = `<div style="padding:20px; text-align:center; font-weight: 600;">No major hospitals found within 25 km of this location.</div>`;
     }
   } catch (err) {
+    console.error("Overpass API Error:", err);
     directoryPanel.innerHTML = `<div style="padding:20px; color: #ef4444;">Error syncing with global hospital database.</div>`;
   }
 }

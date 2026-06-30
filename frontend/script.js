@@ -428,9 +428,10 @@ window.runDiagnosticPrediction = async function () {
 
     addHTMLMessage(reportHTML);
 
-// ADD IT HERE: Now the button actually exists in the DOM!
-document.getElementById("btn-generate-pdf").addEventListener("click", window.generatePDF);
-
+    // ADD IT HERE: Now the button actually exists in the DOM!
+    document
+      .getElementById("btn-generate-pdf")
+      .addEventListener("click", window.generatePDF);
 
     setTimeout(() => {
       addMessage(
@@ -2400,7 +2401,6 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
-
 
 window.addEventListener("DOMContentLoaded", () => {
   // 1. Setup the Toggle Button

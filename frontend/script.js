@@ -427,6 +427,11 @@ window.runDiagnosticPrediction = async function () {
     `;
 
     addHTMLMessage(reportHTML);
+
+// ADD IT HERE: Now the button actually exists in the DOM!
+document.getElementById("btn-generate-pdf").addEventListener("click", window.generatePDF);
+
+
     setTimeout(() => {
       addMessage(
         "I have reviewed your results. Do you have any questions about this condition or what to do next?",
@@ -2395,9 +2400,7 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
-document
-  .getElementById("btn-generate-pdf")
-  .addEventListener("click", window.generatePDF);
+
 
 window.addEventListener("DOMContentLoaded", () => {
   // 1. Setup the Toggle Button

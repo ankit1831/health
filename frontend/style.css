@@ -639,7 +639,7 @@ body {
   }
   .modal-overlay .app-container {
     width: 98% !important; /* Increases the overall triage agent width */
-    height: 96vh !important;
+    height: 92vh !important;
     border-radius: 16px !important;
   }
 

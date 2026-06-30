@@ -2228,6 +2228,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     container.addEventListener("mousemove", onMouseMove);
     container.addEventListener("click", onClick);
+    container.addEventListener("touchend", onClick); // <--- ADD THIS LINE FOR MOBILE
 
     animate();
   }
@@ -2279,9 +2280,21 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   function onClick(event) {
+    // 1. Detect if it's a Mouse Click or a Mobile Screen Tap
+    let clientX = event.clientX;
+    let clientY = event.clientY;
+
+    if (event.changedTouches && event.changedTouches.length > 0) {
+      clientX = event.changedTouches[0].clientX;
+      clientY = event.changedTouches[0].clientY;
+    } else if (clientX === undefined) {
+      return; // Failsafe
+    }
+
+    // 2. Map coordinates to the Three.js Raycaster
     const rect = container.getBoundingClientRect();
-    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
     const activeGroup = isInternalView

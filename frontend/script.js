@@ -2424,4 +2424,26 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
+  // --- ADD THIS RIGHT BELOW YOUR tool-dock LOGIC ---
+
+  // 3. Setup the Sidebar Hamburger Menu
+  const sidebarBtn = document.getElementById("btn-mobile-sidebar");
+  const sidebar = document.querySelector(".sidebar");
+
+  if (sidebarBtn && sidebar) {
+    sidebarBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      sidebar.classList.toggle("open"); // Slides the menu in/out
+    });
+  }
+
+  // 4. Close Sidebar if clicked outside
+  document.addEventListener("click", function (e) {
+    if (sidebar && sidebar.classList.contains("open")) {
+      if (!sidebar.contains(e.target) && !sidebarBtn.contains(e.target)) {
+        sidebar.classList.remove("open");
+      }
+    }
+  });
 });

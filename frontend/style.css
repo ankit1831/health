@@ -614,8 +614,34 @@ body {
    ========================================== */
 @media (max-width: 900px) {
   /* 🟢 FIX 2: Hides the sidebar on small screens so the chat has room! */
-  .sidebar {
-    display: none !important;
+  @media (max-width: 900px) {
+    /* Show the hamburger button */
+    .mobile-sidebar-btn {
+      display: block !important;
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: var(--brand-dark);
+      cursor: pointer;
+      padding: 0;
+    }
+
+    /* Convert the sidebar into a hidden slide-out drawer */
+    .sidebar {
+      display: flex !important; /* Overrides default hiding */
+      position: absolute;
+      top: 0;
+      left: -320px; /* Hides it off-screen to the left */
+      height: 100%;
+      z-index: 10000;
+      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth slide */
+      box-shadow: 15px 0 30px rgba(0, 0, 0, 0.3);
+    }
+
+    /* The class JS will add to slide it into view */
+    .sidebar.open {
+      left: 0;
+    }
   }
 
   /* 🟢 FIX 3: Shrink input area margins so buttons fit perfectly */
@@ -2016,7 +2042,13 @@ body {
 .mobile-toggle-btn {
   display: none;
 }
-
+/* --- DESKTOP SAFEGUARDS --- */
+.mobile-sidebar-btn {
+  display: none;
+}
+.tool-label {
+  display: none;
+}
 /* --- MOBILE RULES (Only applies to screens under 768px) --- */
 @media (max-width: 768px) {
   /* 1. Show the Toggle Button */
@@ -2050,8 +2082,23 @@ body {
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     flex-direction: column; /* Stack vertically */
-    gap: 12px;
+    gap: 4px !important; /* Tighter gap */
+    width: 170px;
     z-index: 9999;
+  }
+  .tool-icon {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    padding: 0 15px !important;
+  }
+
+  /* Show the text labels */
+  .tool-label {
+    display: inline-block !important;
+    margin-left: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--brand-dark);
   }
 
   /* 3. Class added by JavaScript to show the menu */

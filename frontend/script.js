@@ -2399,24 +2399,26 @@ document
   .getElementById("btn-generate-pdf")
   .addEventListener("click", window.generatePDF);
 
-// Toggle the menu when clicking the ⋮ button
-const mobileToggleBtn = document.getElementById("btn-mobile-toggle");
-if (mobileToggleBtn) {
-  mobileToggleBtn.addEventListener("click", function (e) {
-    e.stopPropagation(); // Stop click from immediately closing the menu
-    document.querySelector(".tool-dock").classList.toggle("show-menu");
-  });
-}
-
-// Automatically close the menu if the user clicks anywhere else on the screen
-document.addEventListener("click", function (e) {
+window.addEventListener("DOMContentLoaded", () => {
+  // 1. Setup the Toggle Button
+  const mobileToggleBtn = document.getElementById("btn-mobile-toggle");
   const dock = document.querySelector(".tool-dock");
-  const toggleBtn = document.getElementById("btn-mobile-toggle");
 
-  // If the dock is open, and they didn't click inside the dock or on the toggle button
-  if (dock && dock.classList.contains("show-menu")) {
-    if (!dock.contains(e.target) && e.target !== toggleBtn) {
-      dock.classList.remove("show-menu");
-    }
+  if (mobileToggleBtn && dock) {
+    mobileToggleBtn.addEventListener("click", function (e) {
+      e.preventDefault(); // Stop any default button behavior
+      e.stopPropagation(); // Stop click from bubbling up
+      dock.classList.toggle("show-menu");
+    });
   }
+
+  // 2. Setup the "Click Anywhere to Close" logic
+  document.addEventListener("click", function (e) {
+    if (dock && dock.classList.contains("show-menu")) {
+      // If they didn't click inside the dock, AND didn't click the toggle button
+      if (!dock.contains(e.target) && !mobileToggleBtn.contains(e.target)) {
+        dock.classList.remove("show-menu");
+      }
+    }
+  });
 });

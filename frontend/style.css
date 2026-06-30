@@ -2033,6 +2033,10 @@ body {
     font-weight: bold;
     cursor: pointer;
     margin-right: 8px;
+    /* --- ADD THESE 3 LINES --- */
+    position: relative;
+    z-index: 9999;
+    flex-shrink: 0;
   }
 
   /* 2. Convert Tool Dock into a Floating Menu */

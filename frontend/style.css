@@ -1,5 +1,17 @@
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+/* GLOBAL MOBILE FIX */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden; /* This prevents the "sliding" side-to-side behavior */
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
 
+* {
+  box-sizing: border-box; /* This forces padding to be inside the element, not added to its width */
+}
 :root {
   /* Vibrant, High-Contrast Medical Palette */
   --brand-blue: #0ea5e9;
@@ -101,6 +113,10 @@ body {
 @media (max-width: 768px) {
   .navbar {
     padding: 1rem 1rem;
+  }
+  .nav-btn {
+    margin-right: 5px !important; /* Adjust this number to move it more/less */
+    margin-left: 10px !important;
   }
 
   /* Optional: Hide decorative links on mobile to leave room for the main CTA button */
@@ -618,6 +634,12 @@ body {
   }
   #btn-attach {
     padding: 0 8px !important;
+  }
+  .chat-container {
+    width: 95% !important; /* Forces it to stay inside the screen */
+    margin: 0 auto !important; /* Centers it perfectly */
+    padding-left: 10px;
+    padding-right: 10px;
   }
 }
 
@@ -1981,10 +2003,10 @@ body {
 /* ==========================================
    🟢 FIX: Navbar Overlap (Scroll Offset)
    ========================================== */
-#home, 
-#about, 
-#pathway, 
-#locate, 
+#home,
+#about,
+#pathway,
+#locate,
 #contact {
   scroll-margin-top: 90px; /* Adjust this value based on your navbar height */
 }

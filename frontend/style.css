@@ -26,11 +26,29 @@
   font-family: "Plus Jakarta Sans", sans-serif;
   scroll-behavior: smooth;
 }
-
+/* ==========================================
+   🟢 GLOBAL CONTINUOUS BACKGROUND 
+   ========================================== */
 body {
-  background: var(--bg-white);
+  background-color: #f8fafc !important;
+  /* Adds a premium, subtle tech-dot pattern across the ENTIRE site */
+  background-image: radial-gradient(
+    rgba(14, 165, 233, 0.15) 1px,
+    transparent 1px
+  ) !important;
+  background-size: 30px 30px !important;
   color: var(--text-dark);
   overflow-x: hidden;
+}
+
+/* Strip all hard backgrounds and borders from sections so they bleed together perfectly */
+.hero-modern,
+.bento-section,
+.stream-section,
+.locate-section {
+  background: transparent !important;
+  border: none !important;
+  padding: 100px 5% !important; /* Unified, even breathing room */
 }
 
 /* --- NAVBAR --- */
@@ -46,6 +64,7 @@ body {
   align-items: center;
   padding: 20px 8%;
   z-index: 1000;
+  flex-wrap: wrap;
 }
 .nav-brand {
   font-size: 1.5rem;
@@ -57,6 +76,7 @@ body {
   gap: 35px;
   list-style: none;
   align-items: center;
+  flex-wrap: wrap;
 }
 .nav-links a {
   text-decoration: none;
@@ -78,43 +98,184 @@ body {
 .nav-btn:hover {
   transform: translateY(-2px);
 }
+@media (max-width: 768px) {
+  .navbar {
+    padding: 1rem 1rem;
+  }
 
-/* --- HERO SECTION (Dark & Striking) --- */
-.hero {
-  min-height: 100vh;
+  /* Optional: Hide decorative links on mobile to leave room for the main CTA button */
+  .nav-links li:not(:has(.nav-btn)) {
+    display: none;
+  }
+}
+
+/* ==========================================
+   🟢 PREMIUM BIO-TECH HERO (GLASSMORPHISM)
+   ========================================== */
+.hero-modern {
+  position: relative;
+  min-height: 85vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  background: var(--brand-dark);
-  background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%);
-  color: white;
   padding: 0 5%;
+  background-color: #f8fafc; /* Clean, medical off-white */
+  overflow: hidden; /* Keeps the glowing orbs inside */
 }
-.hero-content {
-  max-width: 900px;
-  margin-top: 60px;
+
+/* 1. The Glowing Mesh Orbs */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.5;
+  animation: floatOrb 12s infinite alternate ease-in-out;
+  z-index: 1;
+  pointer-events: none; /* 🟢 FIX: Stops the light from blocking your clicks */
 }
-.hero h1 {
-  font-size: 4rem;
+.orb-cyan {
+  background: #0ea5e9;
+  width: 50vw;
+  height: 50vw;
+  max-width: 600px;
+  max-height: 600px;
+  top: -10%;
+  left: -5%;
+}
+.orb-indigo {
+  background: #6366f1;
+  width: 45vw;
+  height: 45vw;
+  max-width: 500px;
+  max-height: 500px;
+  bottom: -10%;
+  right: -5%;
+  animation-delay: -5s; /* Offsets the animation so they move differently */
+}
+
+@keyframes floatOrb {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(50px, 30px) scale(1.1);
+  }
+}
+
+/* 2. The Frosted Glass Card */
+.glass-hero-card {
+  position: relative;
+  z-index: 10; /* Sits on top of the orbs */
+  background: rgba(255, 255, 255, 0.7); /* Translucent white */
+  backdrop-filter: blur(24px); /* The Apple Glassmorphism magic */
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 32px;
+  padding: 70px 50px;
+  max-width: 850px;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08); /* Soft floating shadow */
+  transform: translateY(20px); /* Adjusts for the fixed navbar */
+}
+
+/* 3. Typography & Badges */
+.trust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(14, 165, 233, 0.1);
+  color: #0284c7;
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 25px;
+  border: 1px solid rgba(14, 165, 233, 0.2);
+}
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: #0ea5e9;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #0ea5e9;
+  animation: pulseLight 2s infinite;
+}
+@keyframes pulseLight {
+  0% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.4);
+  }
+  70% {
+    opacity: 0.5;
+    box-shadow: 0 0 0 10px rgba(14, 165, 233, 0);
+  }
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(14, 165, 233, 0);
+  }
+}
+
+.glass-hero-card h1 {
+  font-size: 4.5rem;
   font-weight: 800;
   line-height: 1.1;
+  color: var(--brand-dark);
   margin-bottom: 24px;
-  background: linear-gradient(to right, #fff, #38bdf8);
+  letter-spacing: -1.5px;
+}
+.text-gradient {
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-.hero p {
+.glass-hero-card p {
   font-size: 1.25rem;
-  color: #94a3b8;
-  margin-bottom: 40px;
+  color: #475569;
   line-height: 1.6;
+  max-width: 600px;
+  margin: 0 auto 40px auto;
+  font-weight: 500;
 }
-.hero-buttons {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
+
+/* 4. The Glowing CTA Button */
+.btn-glow {
+  display: inline-block;
+  background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+  color: white;
+  padding: 18px 45px;
+  border-radius: 50px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.btn-glow:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 20px 35px -5px rgba(14, 165, 233, 0.6);
+  color: white;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  .glass-hero-card h1 {
+    font-size: 3rem;
+  }
+  .glass-hero-card p {
+    font-size: 1.05rem;
+  }
+  .glass-hero-card {
+    padding: 40px 20px;
+  }
+  .btn-glow {
+    padding: 15px 30px;
+    font-size: 1rem;
+    width: 100%;
+  }
 }
 .btn {
   padding: 16px 32px;
@@ -199,32 +360,75 @@ body {
   color: var(--text-muted);
   font-size: 1.1rem;
 }
-
-/* --- APP CONTAINER (The actual chat interface) --- */
-/* --- APP CONTAINER (The actual chat interface) --- */
-.app-container {
+/* ==========================================
+   🟢 UNIFIED FULL-SCREEN MODAL & CHAT UI
+   ========================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
-  max-width: 1200px;
-  height: 90vh; /* 🟢 INCREASED: Was 750px, now scales to 90% of your screen height */
-  min-height: 720px; /* 🟢 Ensures it never gets too squished on small laptops */
-  background: var(--bg-white);
-  border: 1px solid var(--border-light);
-  border-radius: 24px;
-  box-shadow: var(--shadow-float);
+  height: 100%;
+  z-index: 9999;
   display: flex;
-  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
-/* APP SIDEBAR */
+/* 🟢 FIX 1: The perfect middle-ground width */
+.modal-overlay .app-container {
+  width: 95%;
+  max-width: 1350px; /* Reduced from 1500px, larger than 1200px */
+  height: 90vh;
+  min-height: 700px;
+  display: flex;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 30px 60px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 2.5rem;
+  cursor: pointer;
+  z-index: 100;
+  transition: color 0.2s;
+}
+.close-btn:hover {
+  color: var(--brand-blue);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* --- THE SIDEBAR --- */
 .sidebar {
   width: 300px;
-  background: var(--brand-dark);
+  background: linear-gradient(180deg, var(--brand-dark) 0%, #1e293b 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
   color: white;
   padding: 30px 24px;
   display: flex;
   flex-direction: column;
   gap: 30px;
+  flex-shrink: 0; /* Prevents sidebar from squishing */
 }
+
 .sidebar .brand h2 {
   font-size: 1.4rem;
   color: white;
@@ -236,10 +440,12 @@ body {
 }
 
 .patient-card {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 20px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 .patient-card h3 {
   font-size: 0.85rem;
@@ -270,20 +476,24 @@ body {
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* CHAT AREA */
+/* --- THE CHAT AREA --- */
 .chat-container {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: var(--bg-offwhite);
+  background: transparent;
+  min-width: 0; /* CRITICAL: Allows flex child to shrink properly */
 }
+
 .chat-header {
   padding: 20px 30px;
-  background: white;
-  border-bottom: 1px solid var(--border-light);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   font-weight: 700;
   color: var(--brand-dark);
 }
+
 .chat-box {
   flex: 1;
   padding: 30px;
@@ -292,7 +502,6 @@ body {
   flex-direction: column;
   gap: 20px;
 }
-
 .message {
   display: flex;
   width: 100%;
@@ -318,43 +527,59 @@ body {
   justify-content: flex-end;
 }
 .user-message .message-content {
-  background: var(--brand-gradient);
+  background: linear-gradient(135deg, #0ea5e9, #3b82f6);
   color: white;
   border-bottom-right-radius: 4px;
+  box-shadow: 0 6px 20px -5px rgba(14, 165, 233, 0.4);
 }
 
-/* INPUT AREA */
-/* INPUT AREA */
+/* --- UNBREAKABLE INPUT AREA --- */
 .input-area {
-  padding: 20px 30px;
-  background: white;
-  border-top: 1px solid var(--border-light);
+  padding: 15px 25px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
   display: flex;
-  gap: 15px;
-  align-items: flex-end; /* Keeps send button at the bottom when typing lots of text */
+  gap: 12px;
+  align-items: flex-end;
+  width: 100%;
+  box-sizing: border-box;
+  flex-wrap: nowrap !important; /* Forces buttons to stay inline */
 }
+
 .input-area textarea {
   flex: 1;
-  padding: 16px 20px;
-  background: var(--bg-offwhite);
-  border: 1px solid var(--border-light);
+  min-width: 0 !important; /* Forces text box to shrink, not the buttons */
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
+  padding: 16px 20px;
   font-size: 1rem;
   outline: none;
-  transition: border 0.3s;
-  resize: none; /* Disables the manual drag handle */
-  overflow-y: auto;
+  resize: none;
   min-height: 56px;
-  max-height: 150px; /* Stops growing and adds scrollbar if they type an essay */
+  max-height: 150px;
+  overflow-y: auto;
   font-family: inherit;
-  line-height: 1.5;
 }
 .input-area textarea:focus {
-  border-color: var(--brand-blue);
   background: white;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
 }
+
+#btn-send,
+#btn-predict,
+#btn-attach {
+  flex-shrink: 0 !important;
+  height: 56px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .send-btn {
-  height: 56px; /* Fixed height to match the single-line textarea */
   background: var(--brand-dark);
   color: white;
   padding: 0 24px;
@@ -366,6 +591,34 @@ body {
 }
 .send-btn:hover {
   background: var(--brand-blue);
+}
+
+/* ==========================================
+   🟢 RESPONSIVE MOBILE FIXES FOR MODAL
+   ========================================== */
+@media (max-width: 900px) {
+  /* 🟢 FIX 2: Hides the sidebar on small screens so the chat has room! */
+  .sidebar {
+    display: none !important;
+  }
+
+  /* 🟢 FIX 3: Shrink input area margins so buttons fit perfectly */
+  .input-area {
+    padding: 10px !important;
+    gap: 8px !important;
+  }
+  .input-area textarea {
+    padding: 12px;
+    font-size: 0.95rem;
+  }
+  #btn-send,
+  #btn-predict {
+    padding: 0 16px !important;
+    font-size: 0.85rem !important;
+  }
+  #btn-attach {
+    padding: 0 8px !important;
+  }
 }
 
 /* DIAGNOSIS TABS */
@@ -432,374 +685,190 @@ body {
   background: var(--brand-blue);
   color: white;
 }
-
-/* --- LOCATE & FOOTER --- */
-.locate-section {
-  padding: 100px 5%;
-  text-align: center;
-  background: var(--bg-white);
-}
-.locate-section h2 {
-  font-size: 2.5rem;
-  color: var(--brand-dark);
-  margin-bottom: 20px;
-}
-.search-bar {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin: 40px 0;
-}
-.search-bar input {
-  padding: 15px 20px;
-  width: 350px;
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  font-size: 1rem;
-}
-.search-bar .primary-btn {
-  padding: 0 30px;
-  border-radius: 8px;
-}
-.map-placeholder {
-  background: var(--bg-offwhite);
-  height: 400px;
-  max-width: 1000px;
-  margin: 0 auto;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  color: var(--text-muted);
-  border: 2px dashed var(--border-light);
-}
-
-footer {
-  background: var(--brand-dark);
-  color: white;
-  text-align: center;
-  padding: 60px 5%;
-}
-.footer-content h2 {
-  color: var(--brand-blue);
-  margin-bottom: 10px;
-}
-.social-links {
-  margin: 20px 0;
-}
-.social-links a {
-  color: #94a3b8;
-  margin: 0 15px;
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.3s;
-}
-.social-links a:hover {
-  color: white;
-}
-.disclaimer {
-  font-size: 0.85rem;
-  color: #64748b;
-  margin-top: 30px;
-}
-/* --- FULL SCREEN MODAL POPUP --- */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  opacity: 1;
-  transition: opacity 0.3s ease;
-}
-
-.modal-overlay.hidden {
-  opacity: 0;
-  pointer-events: none;
-  display: flex !important; /* Keep it flex so it transitions smoothly */
-}
-
-/* Make sure the app container inside the modal fits the screen nicely */
-.modal-overlay .app-container {
-  position: relative;
-  width: 95vw;
-  max-width: 1400px;
-  height: 90vh;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-  transform: translateY(0);
-  transition: transform 0.3s ease;
-}
-
-.modal-overlay.hidden .app-container {
-  transform: translateY(20px);
-}
-
-.close-btn {
-  position: absolute;
-  top: 20px;
-  right: 30px;
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 2.5rem;
-  cursor: pointer;
-  z-index: 100;
-  transition: color 0.2s;
-}
-.close-btn:hover {
-  color: var(--brand-blue);
-}
-/* Ensure tabs and hidden elements disappear completely */
-.hidden {
-  display: none !important;
-}
-
 /* ==========================================
-   📌 LOCATE MEDICAL CARE SECTION STYLES
+   🟢 PREMIUM LOCATE CARE DASHBOARD (UNIFIED)
    ========================================== */
 .locate-section {
-  padding: 80px 4%;
-  background-color: var(--bg-offwhite);
-  border-top: 1px solid var(--border-light);
-}
-
-.section-header {
+  padding: 60px 5%; /* 🟢 FIX: Reduced from 100px */
   text-align: center;
-  margin-bottom: 40px;
+  background: var(--bg-offwhite);
+  /* Soft background to contrast the white cards */
 }
 
-.section-header h2 {
-  font-size: 2.2rem;
+.locate-section .section-header h2 {
+  font-size: 2.5rem;
   color: var(--brand-dark);
   margin-bottom: 10px;
 }
 
-.section-header p {
-  color: var(--text-muted);
-  font-size: 1.1rem;
-}
-
-/* Search & Filters Container */
+/* 1. The Floating Command Center (Pill Search Bar) */
 .search-container {
-  max-width: 700px;
+  max-width: 850px;
   margin: 0 auto 40px auto;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
 }
 
 .search-container .search-bar {
   display: flex;
   gap: 10px;
-  background: var(--bg-white);
-  padding: 6px;
-  border-radius: 12px;
-  box-shadow: var(--shadow-soft);
-  border: 1px solid var(--border-light);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  padding: 10px 10px 10px 25px;
+  border-radius: 50px; /* Perfect pill shape */
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 1);
 }
 
 .search-container .search-bar input {
   flex: 1;
   border: none;
-  padding: 12px 16px;
-  font-size: 1rem;
+  background: transparent;
+  font-size: 1.05rem;
   outline: none;
+  font-weight: 500;
+  color: var(--text-dark);
 }
 
 .search-container .search-bar .btn {
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  background: var(--brand-gradient);
-  color: white;
+  padding: 12px 28px;
+  border-radius: 40px;
+  font-weight: 700;
+  white-space: nowrap; /* Stops buttons from wrapping */
 }
 
-/* Quick Action Chips */
-.filter-chips {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.filter-chips .chip {
-  padding: 8px 16px;
-  border-radius: 20px;
-  border: 1px solid var(--border-light);
-  background: var(--bg-white);
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.filter-chips .chip:hover,
-.filter-chips .chip.active {
-  background: var(--brand-dark);
-  color: white;
-  border-color: var(--brand-dark);
-}
-
-/* Workspace Layout Grid */
+/* 2. The Expanded Workspace Grid */
 .locate-workspace {
   display: grid;
-  grid-template-columns: 420px 1fr;
+  grid-template-columns: 380px 1fr; /* Cards on left, map takes the rest */
   gap: 30px;
-  max-width: 1400px;
+  max-width: 1300px;
   margin: 0 auto;
-  height: 450px; /* 🟢 Reduced from 550px to make it smaller and cleaner */
+  align-items: flex-start;
+  text-align: left; /* Fixes text centering inside the cards */
 }
 
-/* Left Panel: Scrollable Directory */
+/* 3. The Directory Panel (Scrollable Left Side) */
 .directory-panel {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 15px;
+  height: 600px;
   overflow-y: auto;
-  padding-right: 10px;
+  padding-right: 15px;
+  padding-bottom: 20px;
+  padding-left: 5px;
 }
 
-/* Custom Scrollbar for Directory Panel */
-.directory-panel::-webkit-scrollbar {
-  width: 6px;
-}
-.directory-panel::-webkit-scrollbar-thumb {
-  background-color: var(--border-light);
-  border-radius: 10px;
-}
-
-/* Directory Facility Cards */
+/* 4. THE MISSING CARD STYLES */
 .facility-card {
-  background: var(--bg-white);
-  border: 1px solid var(--border-light);
-  border-radius: 14px;
-  padding: 20px;
-  box-shadow: var(--shadow-soft);
-  cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 1);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
 }
 
 .facility-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.05);
-  border-color: var(--brand-blue);
+  transform: translateX(5px);
+  box-shadow: 0 15px 35px -5px rgba(14, 165, 233, 0.15);
+  border-color: rgba(14, 165, 233, 0.3);
 }
 
-.facility-card .card-header {
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  margin-bottom: 10px;
   gap: 10px;
-  margin-bottom: 8px;
 }
 
-.facility-card h3 {
-  font-size: 1.15rem;
+.card-header h3 {
+  font-size: 1.1rem;
   color: var(--brand-dark);
-  font-weight: 700;
+  line-height: 1.3;
 }
 
-.facility-card .facility-type {
-  font-size: 0.9rem;
-  color: var(--brand-blue);
-  font-weight: 600;
-  margin-bottom: 6px;
-}
-
-.facility-card .facility-address {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-}
-
-/* Badges styling */
 .status-badge {
+  padding: 5px 10px;
+  border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 700;
-  padding: 4px 8px;
-  border-radius: 6px;
   white-space: nowrap;
 }
 .status-badge.emergency {
-  background: #fef2f2;
+  background: #fee2e2;
   color: #ef4444;
 }
 .status-badge.open {
-  background: #f0fdf4;
+  background: #dcfce7;
   color: #22c55e;
 }
 
-.facility-card .card-footer {
+.facility-type {
+  font-size: 0.9rem;
+  color: var(--brand-dark);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.facility-address {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px dashed var(--border-light);
-  padding-top: 12px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-light);
 }
 
-.facility-card .distance {
+.distance {
   font-size: 0.85rem;
-  color: var(--text-muted);
-  font-weight: 500;
+  font-weight: 700;
+  color: var(--brand-blue);
 }
 
 .card-action-btn {
-  padding: 6px 14px;
-  border-radius: 6px;
+  padding: 8px 16px;
+  background: var(--brand-blue);
+  color: white;
+  border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 600;
-  border: 1px solid var(--brand-blue);
-  background: transparent;
-  color: var(--brand-blue);
-  cursor: pointer;
-  transition: all 0.2s ease;
+  text-decoration: none;
+  transition: background 0.2s;
 }
-
 .card-action-btn:hover {
-  background: var(--brand-gradient);
-  color: white;
-  border-color: transparent;
+  background: var(--brand-dark);
 }
 
-.card-action-btn.text-btn {
-  border-color: #ef4444;
-  color: #ef4444;
-}
-.card-action-btn.text-btn:hover {
-  background: #ef4444;
-  color: white;
-}
-
-/* Right Panel: Map Frame Container */
+/* 5. Edge-to-Edge Map (Right Side) */
 .map-wrapper {
-  background: var(--bg-white);
-  border-radius: 16px;
-  border: 1px solid var(--border-light);
+  height: 600px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(16px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  box-shadow: var(--shadow-soft);
-  height: 100%;
 }
 
 .map-placeholder {
+  flex: 1;
   width: 100%;
-  height: 100%;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f1f5f9;
+}
+
+iframe {
+  border-radius: 20px !important;
 }
 
 /* Mobile Responsiveness Rules */
@@ -810,10 +879,80 @@ footer {
   }
   .map-wrapper {
     height: 350px;
-    order: -1; /* Puts the map on top for mobile views */
+    order: -1;
   }
   .directory-panel {
     height: 400px;
+  }
+}
+
+/* ==========================================
+   🟢 BALANCED PROFESSIONAL FOOTER
+   ========================================== */
+.simple-footer {
+  background: #111827; /* Neutral Deep Slate - No blue tint */
+  color: #9ca3af; /* Slightly lighter text for readability */
+  padding: 60px 5% 40px 5%;
+  border-top: 1px solid #1f2937; /* Matches the slate background */
+}
+
+.footer-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.footer-main-row {
+  display: flex;
+  justify-content: space-between; /* Pushes brand to left, links to right */
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.footer-links {
+  display: flex;
+  gap: 30px; /* Space between links */
+}
+
+.footer-links a {
+  color: #cbd5e1;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: color 0.2s;
+}
+
+.footer-links a:hover {
+  color: var(--brand-blue);
+}
+
+/* ==========================================
+   🟢 FOOTER DIVIDER LINE
+   ========================================== */
+.footer-divider {
+  border-top: 1px solid #1f2937;
+  margin: 25px 0;
+}
+/* Ensure the disclaimer looks good at the top */
+.footer-disclaimer {
+  text-align: left;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #6b7280;
+  margin-bottom: 5px;
+}
+
+.footer-disclaimer strong {
+  color: #fca5a5; /* Keep the red warning, it works well against slate */
+}
+.footer-links a:hover {
+  color: #ffffff; /* Brighter white on hover looks great against slate */
+}
+/* Mobile: Stack items vertically so they don't get squished */
+@media (max-width: 768px) {
+  .footer-main-row {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
   }
 }
 
@@ -870,172 +1009,160 @@ footer {
   z-index: 2;
 }
 
-/* ENLARGED Matrix Nodes */
-.matrix-node {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  width: 220px; /* Wider to hold text */
-  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+/* ==========================================
+   🟢 PREMIUM 4-CARD BENTO GRID (GLASSMORPHISM)
+   ========================================== */
+.bento-section {
+  padding: 100px 5%;
+  background: transparent; /* 🟢 FIX: Makes the background flow seamlessly from the hero */
+  position: relative;
+  z-index: 5;
+  overflow: hidden;
 }
 
-/* Big robust icons */
-.matrix-core {
-  width: 84px;
-  height: 84px;
-  background: #111827;
-  border: 3px solid #166534;
-  border-radius: 50%;
+/* 🟢 NEW: A third orb specifically for the Bento Section */
+.orb-purple {
+  background: #a855f7;
+  width: 40vw;
+  height: 40vw;
+  max-width: 500px;
+  max-height: 500px;
+  top: 20%;
+  left: 30%;
+  animation-delay: -2s;
+  opacity: 0.3;
+}
+
+.bento-header {
+  text-align: center;
+  margin-bottom: 70px;
+  position: relative;
+  z-index: 10;
+}
+
+.bento-header h2 {
+  font-size: 2.8rem;
+  color: var(--brand-dark);
+  margin-bottom: 15px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.bento-header p {
+  font-size: 1.15rem;
+  color: #64748b;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.bento-section {
+  padding: 60px 5% 40px 5%; /* 🟢 FIX: Slashed from 100px to pull it closer to the hero */
+  background: transparent;
+  position: relative;
+  z-index: 5;
+  overflow: hidden;
+}
+
+.bento-header {
+  text-align: center;
+  margin-bottom: 40px; /* 🟢 FIX: Reduced from 70px */
+  position: relative;
+  z-index: 10;
+}
+
+.bento-header h2 {
+  font-size: 2.2rem; /* 🟢 FIX: Scaled down from 2.8rem */
+  color: var(--brand-dark);
+  margin-bottom: 10px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+/* 🟢 RESTORED 2x2 GRID */
+.bento-grid-even {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr) !important; /* Forces the 2x2 layout */
+  gap: 25px;
+  max-width: 1000px; /* Gives the cards room to breathe */
+  margin: 0 auto;
+  position: relative;
+  z-index: 10;
+}
+
+/* Restored Glassmorphism Card */
+.bento-card-clean {
+  background: rgba(
+    255,
+    255,
+    255,
+    0.5
+  ); /* Perfect translucency for the dot grid */
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 24px;
+  padding: 35px; /* Restored internal breathing room */
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: relative;
+  overflow: hidden;
+}
+
+.bento-card-clean:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px -15px rgba(14, 165, 233, 0.2);
+  border-color: rgba(14, 165, 233, 0.4);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* Mobile Responsiveness (Stacks neatly on phones, not desktops) */
+
+.bento-icon-wrapper {
+  margin-bottom: 12px; /* 🟢 FIX: Tighter gap below icon */
+}
+
+.bento-icon {
+  font-size: 1.3rem;
+  width: 45px; /* 🟢 FIX: Shrunk from 55px */
+  height: 45px;
+  /* ... keep the rest ... */
+
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.2rem;
-  z-index: 3;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+  border-radius: 16px;
+  flex-shrink: 0;
+  box-shadow:
+    0 6px 12px -4px rgba(14, 165, 233, 0.15),
+    inset 0 2px 4px rgba(255, 255, 255, 1);
+  border: 1px solid rgba(14, 165, 233, 0.1);
+  transition: transform 0.3s ease;
 }
 
-.matrix-ring {
-  position: absolute;
-  width: 100px;
-  height: 100px;
-  top: -8px;
-  border-radius: 50%;
-  border: 2px dashed rgba(34, 197, 94, 0);
-  transition: all 0.5s ease;
-}
-
-.matrix-meta-tag {
-  margin-top: 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  background: rgba(3, 7, 18, 0.9);
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: 1px solid #111827;
-}
-
-.matrix-meta-tag .m-title {
-  color: #e5e7eb;
-  font-weight: 800;
-  font-size: 0.95rem;
-}
-
-.matrix-meta-tag .m-tech {
-  color: #22c55e;
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin-top: 4px;
-}
-
-/* Node States */
-.matrix-node:hover {
-  transform: translateY(-5px);
-}
-.matrix-node:hover .matrix-core {
-  border-color: #22c55e;
-  box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
-}
-.matrix-node.active .matrix-core {
-  background: #22c55e;
-  border-color: #86efac;
-  box-shadow: 0 0 30px rgba(34, 197, 94, 0.6);
-}
-.matrix-node.active .matrix-meta-tag .m-title {
-  color: #fff;
-}
-.matrix-node.active .matrix-ring {
-  border-color: rgba(34, 197, 94, 0.6);
-  transform: rotate(180deg);
-}
-
-/* Expanded Hover Box */
-.matrix-hover-box {
-  position: absolute;
-  bottom: 165px;
-  background: #111827;
-  border: 1px solid #16a34a;
-  border-radius: 8px;
-  padding: 16px;
-  width: 280px; /* Widened to fit full sentences */
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(12px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 20;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
-  text-align: left; /* Keep bullets aligned left */
-}
-.matrix-hover-box h5 {
-  color: #ffffff;
-  font-size: 0.9rem;
-  font-weight: 800;
-  margin-bottom: 10px;
-  border-bottom: 1px solid #1f2937;
-  padding-bottom: 8px;
-  text-align: center;
-}
-.matrix-hover-box p {
-  color: #9ca3af;
-  font-size: 0.82rem;
-  line-height: 1.5;
-  margin: 0 0 6px 0;
-}
-.matrix-node:hover .matrix-hover-box {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-
-.matrix-dashboard {
-  width: 100%;
-  max-width: 1200px;
-  background: #0b0f19;
-  border: 1px solid #111827;
-  border-radius: 14px;
-  padding: 25px; /* Reduced from 35px */
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
-}
-
-.dash-grid {
-  display: grid;
-  grid-template-columns: 1.5fr 1.2fr; /* 2 Clean Columns */
-  gap: 40px;
-}
-
-.dash-col {
-  display: flex;
-  flex-direction: column;
-}
-
-/* Dashboard Typography */
-.dash-index {
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: #22c55e;
-  letter-spacing: 0.1em;
-}
-#panel-step-title {
-  color: #ffffff;
-  font-size: 1.4rem;
-  margin: 4px 0 10px 0;
-  font-weight: 800;
-}
-.dash-badge {
-  display: inline-block;
-  align-self: flex-start;
-  background: rgba(34, 197, 94, 0.12);
-  color: #4ade80;
-  padding: 5px 12px;
-  border-radius: 6px;
-  font-size: 0.8rem;
+/* Reduced Typography */
+.bento-content h3 {
+  font-size: 1.15rem; /* Shrunk from 1.4rem */
+  color: var(--brand-dark);
+  margin-bottom: 8px;
   font-weight: 700;
-  border: 1px solid rgba(34, 197, 94, 0.25);
-  margin-bottom: 20px;
+  letter-spacing: -0.3px;
+}
+
+.bento-content p {
+  color: #475569;
+  line-height: 1.6;
+  font-size: 0.9rem; /* Shrunk from 1.05rem */
+  font-weight: 500;
+}
+
+/* Mobile Responsiveness (Stacks neatly on phones) */
+@media (max-width: 850px) {
+  .bento-grid-even {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 .operational-workflow h4,
@@ -1166,4 +1293,698 @@ footer {
 
 #btn-attach:hover {
   color: var(--brand-blue) !important;
+}
+
+/* ==========================================
+   🟢 HORIZONTAL DATA-STREAM PATHWAY
+   ========================================== */
+.stream-section {
+  padding: 40px 5%; /* 🟢 FIX: Slashed from 80px */
+  background: var(--bg-white);
+  position: relative;
+  z-index: 5;
+}
+
+.stream-header {
+  text-align: center;
+  margin-bottom: 25px; /* 🟢 FIX: Reduced from 40px */
+}
+
+.stream-container {
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 10px 0;
+  height: 320px; /* 🟢 FIX: Reduced from 400px so it doesn't take up the whole screen */
+  display: flex;
+  align-items: center;
+}
+
+.stream-header h2 {
+  font-size: 2.2rem; /* Scaled down */
+  color: var(--brand-dark);
+  margin-bottom: 10px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.stream-header p {
+  font-size: 1rem; /* Scaled down */
+  color: #64748b;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* The Glowing Horizontal Laser Line */
+.stream-laser {
+  position: absolute;
+  top: 50%;
+  left: 5%;
+  width: 90%;
+  height: 3px;
+  background: rgba(14, 165, 233, 0.2);
+  transform: translateY(-50%);
+  border-radius: 3px;
+  z-index: 1;
+}
+
+/* Animated Light Beam shooting across the line */
+.stream-laser-glow {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 150px;
+  height: 5px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #0ea5e9,
+    #38bdf8,
+    transparent
+  );
+  border-radius: 50%;
+  box-shadow: 0 0 15px #0ea5e9;
+  animation: laserShoot 4s infinite linear;
+}
+
+@keyframes laserShoot {
+  0% {
+    left: -10%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+/* The Wrapper holding the 4 steps */
+.stream-steps-wrapper {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+/* Individual Steps */
+.stream-step {
+  width: 22%; /* Ensures 4 cards fit perfectly side-by-side */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* Push alternating cards above or below the line */
+.step-up {
+  justify-content: flex-end;
+  margin-bottom: 25px; /* Pushes the dot down to the line */
+}
+.step-down {
+  justify-content: flex-start;
+  margin-top: 25px; /* Pushes the dot up to the line */
+}
+
+/* The Connection Dots on the Line */
+.stream-dot {
+  width: 16px;
+  height: 16px;
+  background: white;
+  border: 3px solid #0ea5e9;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+  margin: 8px 0; /* Creates distance between the card and the line */
+  transition: all 0.3s ease;
+}
+
+/* Small, Compact Glassmorphism Cards */
+.stream-card {
+  background: rgba(248, 250, 252, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 16px;
+  padding: 20px; /* Reduced padding */
+  text-align: center;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stream-step:hover .stream-card {
+  transform: translateY(-5px) scale(1.03);
+  box-shadow: 0 15px 35px -5px rgba(14, 165, 233, 0.15);
+  border-color: rgba(14, 165, 233, 0.4);
+  background: white;
+}
+.stream-step:hover .stream-dot {
+  transform: scale(1.5);
+  background: #0ea5e9;
+  box-shadow: 0 0 15px #0ea5e9;
+}
+
+/* Shrunk Aesthetics */
+.stream-icon {
+  font-size: 1.6rem; /* Shrunk */
+  background: #f0f9ff;
+  width: 45px; /* Shrunk */
+  height: 45px; /* Shrunk */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  margin: 0 auto 15px auto;
+  border: 1px solid #bae6fd;
+}
+
+.stream-card h3 {
+  font-size: 1.05rem; /* Shrunk */
+  color: var(--brand-dark);
+  margin-bottom: 8px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.stream-card p {
+  color: #475569;
+  line-height: 1.5;
+  font-size: 0.85rem; /* Shrunk */
+  margin: 0;
+}
+
+/* Mobile Responsiveness: Switches back to a compact vertical stack so it doesn't break on phones */
+@media (max-width: 900px) {
+  .stream-container {
+    height: auto;
+    flex-direction: column;
+  }
+  .stream-laser {
+    display: none;
+  } /* Hide horizontal line on mobile */
+  .stream-steps-wrapper {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  .stream-step {
+    width: 90%;
+  }
+  .step-up,
+  .step-down {
+    flex-direction: column;
+    margin: 0;
+  }
+  .stream-dot {
+    display: none;
+  } /* Hide dots on mobile */
+}
+
+/* ==========================================
+   🟢 THE ULTIMATE MASTER OVERRIDES
+   ========================================== */
+
+/* --- 1. SEAMLESS CONTINUITY (Fixes cutoffs & unified background) --- */
+body {
+  background-color: #f8fafc !important;
+  background-image: radial-gradient(
+    rgba(14, 165, 233, 0.15) 1px,
+    transparent 1px
+  ) !important;
+  background-size: 30px 30px !important;
+}
+
+.hero-modern,
+.bento-section,
+.stream-section,
+.locate-section {
+  background: transparent !important;
+  border: none !important;
+  overflow: visible !important; /* 🟢 FIX: Stops orbs from getting chopped off */
+}
+
+.hero-modern {
+  min-height: 80vh !important; /* Pulls content up */
+}
+
+/* --- 2. UNIFIED HEADINGS & TIGHT SPACING (Fixes dead space) --- */
+.bento-header h2,
+.stream-header h2,
+.section-header h2 {
+  font-size: 2.6rem !important; /* 🟢 FIX: All headings are now exactly the same size */
+  margin-bottom: 12px !important;
+  color: var(--brand-dark) !important;
+  letter-spacing: -1px !important;
+}
+
+/* Squeezing the massive white spaces between sections */
+.bento-section {
+  padding: 10px 5% 40px 5% !important;
+}
+.stream-section {
+  padding: 30px 5% 40px 5% !important;
+}
+.locate-section {
+  padding: 30px 5% 80px 5% !important;
+}
+
+/* --- 3. OPTIMIZED MAP DASHBOARD (Wider list, smaller map) --- */
+.locate-workspace {
+  grid-template-columns: 500px 1fr !important; /* 🟢 FIX: Much wider search/cards, smaller map */
+  max-width: 1350px !important;
+  gap: 30px !important;
+}
+
+/* Slightly reduced height so it fits beautifully on laptop screens */
+.locate-sidebar {
+  height: 520px !important;
+}
+.map-wrapper {
+  height: 520px !important;
+}
+
+/* Tighter Search Bar inside the new wider column */
+.locate-sidebar .search-bar {
+  padding: 12px !important;
+  gap: 10px !important;
+}
+
+/* --- MOBILE RESPONSIVENESS --- */
+@media (max-width: 968px) {
+  .locate-workspace {
+    grid-template-columns: 1fr !important;
+  }
+  .locate-sidebar {
+    height: auto !important;
+  }
+  .locate-sidebar .directory-panel {
+    max-height: 400px !important;
+  }
+  .map-wrapper {
+    height: 400px !important;
+    order: -1;
+  }
+}
+
+/* ==========================================
+   🟢 PREMIUM UNIFIED SEARCH BAR 
+   ========================================== */
+
+/* 1. The Seamless Glass Pill */
+.search-bar-unified {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 50px;
+  padding: 8px 10px 8px 24px;
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 1);
+  gap: 8px;
+  margin-bottom: 25px !important; /* 🟢 FIX: Pushes the filter chips down */
+}
+
+/* 2. The Input Field */
+.search-bar-unified input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-size: 1.05rem;
+  outline: none;
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+/* 3. The 'Near Me' Ghost Button */
+.location-ghost-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.location-ghost-btn:hover {
+  background: rgba(14, 165, 233, 0.1);
+  color: var(--brand-blue);
+}
+
+/* 4. The Subtle Divider */
+.search-divider {
+  width: 1px;
+  height: 24px;
+  background: #e2e8f0;
+  margin: 0 4px;
+}
+
+/* 5. The Circular Search Button */
+.search-circle-btn {
+  background: var(--brand-gradient);
+  color: white;
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%; /* Perfect circle */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+  padding: 0 !important; /* Overrides old button padding */
+  flex-shrink: 0;
+}
+.search-circle-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 15px rgba(14, 165, 233, 0.4);
+}
+
+/* Fix mobile scaling for the search bar */
+@media (max-width: 600px) {
+  .search-bar-unified {
+    padding: 6px 8px 6px 16px;
+  }
+  .loc-text {
+    display: none; /* Hides "Near Me" text on phones, leaves just the pin */
+  }
+}
+
+/* Make sure the old filter margin override is removed if you still have it, 
+   but this gap will look perfect now regardless */
+.locate-sidebar .filter-chips {
+  margin-top: 0 !important;
+}
+
+/* ==========================================
+   🟢 UX UPGRADES: TTS & SCROLL ANIMATIONS
+   ========================================== */
+
+/* --- 1. The Inline Speaker Button --- */
+.speaker-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0 0 0 10px;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.2s ease;
+  vertical-align: middle;
+}
+
+.speaker-btn:hover {
+  color: var(--brand-blue);
+}
+
+.speaker-btn.playing {
+  color: #10b981;
+  animation: pulse-green 1.5s infinite;
+}
+
+@keyframes pulse-green {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* --- 2. Scroll-Triggered Fade Animations --- */
+.fade-up {
+  opacity: 0;
+  transform: translateY(40px);
+  transition:
+    opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* --- 🟢 Voice-to-Text Microphone State --- */
+
+#btn-mic.recording {
+  color: #ef4444 !important; /* Emergency Red */
+  animation: pulse-mic 1.5s infinite;
+}
+
+@keyframes pulse-mic {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+/* ==========================================
+   🟢 OPEN-SOURCE LOCATION AUTOCOMPLETE 
+   ========================================== */
+
+/* Anchor the dropdown to the search area */
+.search-container {
+  position: relative !important;
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: 75px; /* Sits right below the search pill */
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 16px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-light);
+  z-index: 1000;
+  max-height: 280px;
+  overflow-y: auto;
+  list-style: none;
+  padding: 8px;
+  display: none; /* Hidden until you type */
+}
+
+.autocomplete-dropdown.active {
+  display: block;
+}
+
+.autocomplete-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+}
+
+.autocomplete-item:hover {
+  background: rgba(14, 165, 233, 0.1);
+  color: var(--brand-blue);
+}
+
+.autocomplete-item strong {
+  color: var(--brand-dark);
+}
+/* --- 🟢 Camera Button State --- */
+/* --- 🟢 Interactive Body Map State --- */
+
+.symptom-tag {
+  background: #e0f2fe;
+  color: #0284c7;
+  padding: 6px 12px;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #bae6fd;
+  animation: fade-in 0.2s ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+/* ==========================================
+   🟢 INVISIBLE, PERFECTLY ALIGNED TOOLBAR
+   ========================================== */
+.tool-dock {
+  display: flex;
+  gap: 4px;
+  background: transparent; /* 🟢 Stripped the grey background */
+  padding: 0;
+  border: none;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.tool-icon {
+  width: 40px;
+  height: 56px; /* 🟢 FIX: Exactly matches the Text Area & Send Button height */
+  background: transparent;
+  border: none;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.tool-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2.2px;
+}
+
+/* Clean, invisible hover pop without the clunky background */
+.tool-icon:hover {
+  color: var(--brand-blue);
+  transform: scale(1.15);
+}
+
+/* Voice Mic Recording State */
+.mic-tool:hover {
+  color: #ef4444;
+}
+.mic-tool.recording {
+  color: #ef4444;
+  animation: pulse-mic 1.5s infinite;
+}
+
+@media (max-width: 900px) {
+  .tool-dock {
+    gap: 0px;
+  }
+  .tool-icon {
+    width: 34px;
+  }
+}
+
+/* ==========================================
+   🟢 OVERFLOW BUG & HEADER HEIGHT FIXES
+   ========================================== */
+
+/* 1. Slim down the Navbar (Header) */
+.navbar {
+  padding: 12px 5% !important; /* Reduced from 20px for a tighter look */
+}
+
+/* 2. Lock the sidebar height and make it a flex container */
+.locate-sidebar {
+  height: 550px !important; /* Matched with the map */
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important; /* Prevents anything from breaking out */
+}
+
+/* 3. Force the hospital list to fill the remaining space and scroll internally */
+.directory-panel {
+  flex: 1 !important;
+  height: auto !important; /* Kills the old 600px hardcoded height causing the bleed */
+  overflow-y: auto !important;
+  padding-right: 10px !important; /* Space for the scrollbar */
+  padding-bottom: 20px !important;
+}
+
+/* 4. Ensure the map matches the sidebar perfectly */
+.map-wrapper {
+  height: 550px !important;
+}
+
+/* Mobile adjustments */
+@media (max-width: 968px) {
+  .locate-sidebar {
+    height: 500px !important; /* Smaller on mobile */
+  }
+  .map-wrapper {
+    height: 400px !important;
+  }
+}
+/* ==========================================
+   🟢 UPDATED EMERGENCY BANNER (GLASS EFFECT)
+   ========================================== */
+.emergency-banner {
+  max-width: 850px;
+  /* Tightened the margin-top to close the gap */
+  margin: 10px auto 20px auto;
+  /* Semi-transparent background lets the dots show through */
+  background: rgba(254, 242, 242, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(254, 205, 205, 0.5);
+  color: #991b1b;
+  /* Increased padding to make it "bigger" */
+  padding: 25px 30px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 1rem; /* Slightly larger text */
+  line-height: 1.5;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.emergency-banner svg {
+  width: 32px; /* Slightly larger icon */
+  height: 32px;
+  flex-shrink: 0;
+  stroke-width: 2px;
+  color: #ef4444;
+}
+
+@media (max-width: 900px) {
+  .emergency-banner {
+    margin: 10px 5% 20px 5%;
+    padding: 20px;
+  }
+}
+
+/* ==========================================
+   🟢 FIX: Navbar Overlap (Scroll Offset)
+   ========================================== */
+#home, 
+#about, 
+#pathway, 
+#locate, 
+#contact {
+  scroll-margin-top: 90px; /* Adjust this value based on your navbar height */
 }

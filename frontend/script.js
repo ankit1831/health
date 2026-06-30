@@ -171,6 +171,21 @@ function addMessage(text, sender) {
   formattedText = formattedText.replace(/\*(.*?)\*/g, "<em>$1</em>"); // Italic
 
   contentDiv.innerHTML = formattedText;
+  if (sender === "ai") {
+    const speakerBtn = document.createElement("button");
+    speakerBtn.className = "speaker-btn";
+    speakerBtn.title = "Listen to answer";
+    speakerBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
+
+    // 👇 ADD THIS ONE LINE RIGHT HERE 👇
+    speakerBtn.style.cssText =
+      "display: inline-block; margin-top: 10px; margin-left: 8px; cursor: pointer; color: #94a3b8;";
+
+    speakerBtn.onclick = function () {
+      window.speakText(text, this);
+    };
+    contentDiv.appendChild(speakerBtn); // <-- Notice this is contentDiv, perfectly correct.
+  }
 
   msgDiv.appendChild(contentDiv);
   chatBox.appendChild(msgDiv);
@@ -399,6 +414,10 @@ window.runDiagnosticPrediction = async function () {
                 <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('user-input').value='Are there any home remedies?'; document.getElementById('btn-send').click();">Home Remedies</button>
                 <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('user-input').value='What are the immediate Dos and Don\\'ts?'; document.getElementById('btn-send').click();">Dos and Don'ts</button>
                 
+                <button class="speaker-btn" style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; border: 1px solid #bae6fd; background: #f0f9ff; color: #0ea5e9; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px;" onclick="window.speakText(document.getElementById('pat-${uniqueId}').innerText, this)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg> Listen
+                </button>
+
                 <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; background: #1e293b; color: white; cursor: pointer; transition: 0.2s;" onclick="generatePDF()">Download Report</button>
                 <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; background: #ef4444; color: white; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('triage-modal').classList.add('hidden'); document.getElementById('locate').scrollIntoView({ behavior: 'smooth' }); window.findNearestHospitals();">View Nearby Hospitals</button>
             </div>
@@ -758,6 +777,21 @@ btnSend.addEventListener("click", async () => {
         }
       }
     }
+
+    const speakerBtn = document.createElement("button");
+    speakerBtn.className = "speaker-btn";
+    speakerBtn.title = "Listen to answer";
+    speakerBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
+
+    // 👇 ADD THIS ONE LINE RIGHT HERE 👇
+    speakerBtn.style.cssText =
+      "display: inline-block; margin-top: 10px; margin-left: 8px; cursor: pointer; color: #94a3b8;";
+
+    speakerBtn.onclick = function () {
+      window.speakText(fullAiReply, this);
+    };
+    contentDiv.appendChild(speakerBtn); // <-- Notice this is contentDiv, perfectly correct.
+    chatBox.scrollTop = chatBox.scrollHeight;
 
     // --- Post-Stream Processing ---
     // If they typed "predict" or a massive essay, trigger the prediction directly
@@ -1327,3 +1361,1036 @@ if (searchBtn && searchInput) {
     }
   });
 }
+
+// ==========================================
+// 🟢 HIGH-END UX INTEGRATIONS
+// ==========================================
+
+// --- 1. PORTFOLIO TEXT-TO-SPEECH ENGINE ---
+let currentUtterance = null;
+window.speechSynthesis.getVoices(); // Pre-load voices
+
+const iconPlay = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
+const iconStop = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>`;
+
+window.speakText = function (text, buttonElement) {
+  // If playing, stop it
+  if (buttonElement.classList.contains("playing")) {
+    window.speechSynthesis.cancel();
+    buttonElement.classList.remove("playing");
+    buttonElement.innerHTML = iconPlay;
+    return;
+  }
+
+  // Cancel any other speaking audio
+  window.speechSynthesis.cancel();
+  document.querySelectorAll(".speaker-btn").forEach((btn) => {
+    btn.classList.remove("playing");
+    btn.innerHTML = iconPlay;
+  });
+
+  // Clean the markdown text
+  let cleanText = text.replace(/[*#_]/g, "").replace(/•/g, ". ");
+
+  currentUtterance = new SpeechSynthesisUtterance(cleanText);
+  currentUtterance.rate = 1.0;
+
+  // 🟢 NEW: THE AUTO-DETECTION ENGINE
+  const voices = window.speechSynthesis.getVoices();
+  let bestVoice;
+
+  // Check if the text contains Hindi (Devanagari) characters
+  const isHindi = /[\u0900-\u097F]/.test(cleanText);
+
+  if (isHindi) {
+    // Force the native Hindi voice
+    bestVoice = voices.find(
+      (v) => v.lang.includes("hi-IN") || v.lang.includes("hi"),
+    );
+  } else {
+    // Default back to Indian English or UK English
+    bestVoice = voices.find(
+      (v) =>
+        v.lang.includes("en-IN") ||
+        v.name.includes("India") ||
+        v.name.includes("UK"),
+    );
+  }
+
+  if (bestVoice) {
+    currentUtterance.voice = bestVoice;
+  }
+
+  // Set UI to playing
+  buttonElement.classList.add("playing");
+  buttonElement.innerHTML = iconStop;
+
+  // Reset UI when done
+  currentUtterance.onend = () => {
+    buttonElement.classList.remove("playing");
+    buttonElement.innerHTML = iconPlay;
+  };
+
+  window.speechSynthesis.speak(currentUtterance);
+};
+/*
+// --- 2. GOOGLE PLACES AUTOCOMPLETE ---
+window.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("map-search-input");
+
+  // Check if Google Maps is loaded in index.html
+  if (
+    input &&
+    window.google &&
+    window.google.maps &&
+    window.google.maps.places
+  ) {
+    const autocomplete = new google.maps.places.Autocomplete(input);
+
+    // When the user clicks a dropdown suggestion, auto-trigger the map!
+    autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (place.formatted_address || place.name) {
+        window.findNearestHospitals(place.formatted_address || place.name);
+      }
+    });
+  }
+});
+*/
+
+// --- 3. SCROLL-TRIGGERED ANIMATIONS ---
+window.addEventListener("DOMContentLoaded", () => {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+          observer.unobserve(entry.target); // Only animate once
+        }
+      });
+    },
+    { threshold: 0.15 },
+  ); // Triggers when 15% of the element is visible
+
+  // Grab the elements we want to animate and attach them to the observer
+  const animatedElements = document.querySelectorAll(
+    ".bento-card-clean, .stream-card, .section-header, .search-bar-unified",
+  );
+
+  animatedElements.forEach((el) => {
+    el.classList.add("fade-up");
+    observer.observe(el);
+  });
+});
+// ==========================================
+// 🟢 4. VOICE-TO-TEXT ENGINE (SPEECH RECOGNITION)
+// ==========================================
+window.addEventListener("DOMContentLoaded", () => {
+  const btnMic = document.getElementById("btn-mic");
+  const inputArea = document.getElementById("user-input");
+
+  // Check browser support for Speech API
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (SpeechRecognition) {
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false; // Stops automatically when they pause speaking
+    recognition.interimResults = true; // Shows words in real-time as they talk
+
+    let isRecording = false;
+
+    btnMic.addEventListener("click", () => {
+      if (isRecording) {
+        recognition.stop();
+        return;
+      }
+      recognition.start();
+    });
+
+    recognition.onstart = () => {
+      isRecording = true;
+      btnMic.classList.add("recording");
+      inputArea.placeholder = "Listening... Speak your symptoms clearly.";
+    };
+
+    recognition.onresult = (event) => {
+      let interimTranscript = "";
+      let finalTranscript = "";
+
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+
+      // Combine existing text with the new voice input
+      inputArea.value = finalTranscript || interimTranscript;
+
+      // Auto-expand the textarea so the voice text fits perfectly
+      inputArea.style.height = "auto";
+      inputArea.style.height = inputArea.scrollHeight + "px";
+    };
+
+    recognition.onend = () => {
+      isRecording = false;
+      btnMic.classList.remove("recording");
+      inputArea.placeholder = "Type your message or upload a document...";
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error", event.error);
+      isRecording = false;
+      btnMic.classList.remove("recording");
+      inputArea.placeholder = "Type your message or upload a document...";
+
+      if (event.error === "not-allowed") {
+        alert(
+          "Microphone access was denied. Please enable it in your browser settings to use voice features.",
+        );
+      }
+    };
+  } else {
+    // Hide the mic button if the browser doesn't support the Speech API (e.g., Firefox without flags)
+    if (btnMic) btnMic.style.display = "none";
+  }
+});
+
+// ==========================================
+// 🟢 FREE OPEN-SOURCE AUTOCOMPLETE (NOMINATIM)
+// ==========================================
+window.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("map-search-input");
+  if (!input) return;
+
+  // 1. Create the dropdown list
+  const dropdown = document.createElement("ul");
+  dropdown.className = "autocomplete-dropdown";
+
+  // 2. Inject it right below the unified search bar
+  const searchBar = document.querySelector(".search-bar-unified");
+  if (searchBar) {
+    searchBar.parentNode.insertBefore(dropdown, searchBar.nextSibling);
+  }
+
+  let timeoutId;
+
+  // 3. Listen to typing
+  input.addEventListener("input", function () {
+    clearTimeout(timeoutId);
+    const query = this.value;
+
+    // Wait until they type at least 3 letters
+    if (query.length < 3) {
+      dropdown.classList.remove("active");
+      return;
+    }
+
+    // Wait 300ms after they stop typing to fetch data (Debouncing)
+    timeoutId = setTimeout(async () => {
+      try {
+        // Ping the free OpenStreetMap API for city suggestions
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
+        );
+        const data = await res.json();
+
+        dropdown.innerHTML = ""; // Clear old results
+
+        if (data.length > 0) {
+          data.forEach((item) => {
+            const li = document.createElement("li");
+            li.className = "autocomplete-item";
+
+            // Format the text nicely
+            const parts = item.display_name.split(",");
+            const mainText = parts[0];
+            const subText = parts.slice(1, 3).join(","); // Just show state/country to keep it clean
+
+            li.innerHTML = `📍 <span><strong>${mainText}</strong>${subText ? "," + subText : ""}</span>`;
+
+            // When clicked, auto-fill and run the map search!
+            li.addEventListener("click", () => {
+              input.value = item.display_name;
+              dropdown.classList.remove("active");
+              window.findNearestHospitals(item.display_name);
+            });
+
+            dropdown.appendChild(li);
+          });
+          dropdown.classList.add("active");
+        } else {
+          dropdown.classList.remove("active");
+        }
+      } catch (err) {
+        console.error("Autocomplete error:", err);
+      }
+    }, 300);
+  });
+
+  // 4. Hide dropdown if the user clicks anywhere else on the screen
+  document.addEventListener("click", (e) => {
+    if (e.target !== input && !dropdown.contains(e.target)) {
+      dropdown.classList.remove("active");
+    }
+  });
+});
+// ==========================================
+// 🟢 5. LIVE CAMERA VISION ENGINE
+// ==========================================
+window.addEventListener("DOMContentLoaded", () => {
+  const cameraModal = document.getElementById("camera-modal");
+  const cameraVideo = document.getElementById("camera-video");
+  const cameraCanvas = document.getElementById("camera-canvas");
+  const btnCamera = document.getElementById("btn-camera");
+  const btnCloseCamera = document.getElementById("btn-close-camera");
+  const btnCapture = document.getElementById("btn-capture");
+
+  let stream = null;
+
+  // 1. Open Camera Viewfinder
+  if (btnCamera) {
+    btnCamera.addEventListener("click", async () => {
+      cameraModal.classList.remove("hidden");
+      try {
+        // Request camera access (prefer rear camera for medical scans)
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+          audio: false,
+        });
+        cameraVideo.srcObject = stream;
+      } catch (err) {
+        console.error("Camera error:", err);
+        alert(
+          "Camera access denied or unavailable. Please check your browser permissions.",
+        );
+        cameraModal.classList.add("hidden");
+      }
+    });
+  }
+
+  // 2. Close Camera Viewfinder safely
+  function stopCamera() {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      stream = null;
+    }
+    cameraModal.classList.add("hidden");
+  }
+
+  if (btnCloseCamera) {
+    btnCloseCamera.addEventListener("click", stopCamera);
+  }
+
+  // 3. Snap the Photo & Inject into Upload System
+  if (btnCapture) {
+    btnCapture.addEventListener("click", () => {
+      // Draw the current video frame onto the invisible canvas
+      cameraCanvas.width = cameraVideo.videoWidth;
+      cameraCanvas.height = cameraVideo.videoHeight;
+      cameraCanvas.getContext("2d").drawImage(cameraVideo, 0, 0);
+
+      // Convert the canvas to a Base64 image
+      const dataUrl = cameraCanvas.toDataURL("image/jpeg", 0.9);
+
+      // Convert Base64 into a standard Javascript File object
+      fetch(dataUrl)
+        .then((res) => res.blob())
+        .then((blob) => {
+          const file = new File([blob], "live-camera-scan.jpg", {
+            type: "image/jpeg",
+          });
+
+          // 🟢 INJECT: Hand it over to your existing file upload logic!
+          currentUploadedFile = file;
+
+          // Update your UI to show the image is attached and ready to send
+          const previewContainer = document.getElementById(
+            "file-preview-container",
+          );
+          const previewName = document.getElementById("file-preview-name");
+          const previewIcon = document.getElementById("file-preview-icon");
+
+          if (previewName) previewName.innerText = "Live Camera Scan 📸";
+          if (previewIcon) previewIcon.innerText = "🖼️";
+          if (previewContainer) previewContainer.style.display = "flex";
+
+          // Shut down the camera
+          stopCamera();
+        });
+    });
+  }
+});
+// ==========================================
+// 🟢 6. ADVANCED 3D SYMPTOM MAPPER (THREE.JS)
+// ==========================================
+window.addEventListener("DOMContentLoaded", () => {
+  const mapModal = document.getElementById("bodymap-modal");
+  const btnOpenMap = document.getElementById("btn-body-map");
+  const btnCloseMap = document.getElementById("btn-close-bodymap");
+  const btnConfirm = document.getElementById("btn-confirm-symptoms");
+  const container = document.getElementById("three-canvas-container");
+  const hoverLabel = document.getElementById("hover-label");
+  const tagsContainer = document.getElementById("selected-symptoms-container");
+  const btnExternal = document.getElementById("btn-view-external");
+  const btnInternal = document.getElementById("btn-view-internal");
+
+  if (!container || !window.THREE) return;
+
+  let scene, camera, renderer, controls, raycaster, mouse;
+  let externalGroup, internalGroup;
+  let isInternalView = false;
+  let selectedParts = new Set();
+  let allMeshes = [];
+
+  // --- CORE UI COLORS ---
+  const COLOR_SKIN_BASE = 0x334155; // Dark slate for skin
+  const COLOR_SKIN_HOVER = 0x38bdf8; // Bright blue for skin hover
+  const COLOR_SKIN_SELECT = 0x0ea5e9; // Solid blue for selected skin
+
+  const COLOR_ORGAN_HOVER = 0xffffff; // Pure White for organ hover
+  const COLOR_ORGAN_SELECT = 0x00ffff; // Neon Cyan for selected organs (High Visibility)
+
+  // --- ANATOMICAL ORGAN COLORS ---
+  const ORG_BRAIN = 0xd8b4e2; // Soft Purple
+  const ORG_HEART = 0xff4d4d; // Vibrant Red
+  const ORG_LUNGS = 0x87cefa; // Sky Blue
+  const ORG_LIVER = 0x8b0000; // Dark Red
+  const ORG_STOMACH = 0xffa500; // Orange
+  const ORG_KIDNEYS = 0xda70d6; // Orchid Magenta
+  const ORG_INTESTINES = 0x98fb98; // Pale Green
+
+  function init3D() {
+    scene = new THREE.Scene();
+
+    camera = new THREE.PerspectiveCamera(
+      45,
+      container.clientWidth / container.clientHeight,
+      0.1,
+      100,
+    );
+    camera.position.set(0, 0, 15);
+
+    renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    container.innerHTML = "";
+    container.appendChild(renderer.domElement);
+    container.appendChild(hoverLabel);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambientLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    dirLight.position.set(10, 20, 10);
+    scene.add(dirLight);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enablePan = false;
+    controls.minDistance = 5;
+    controls.maxDistance = 25;
+
+    externalGroup = new THREE.Group();
+    internalGroup = new THREE.Group();
+    scene.add(externalGroup);
+    scene.add(internalGroup);
+
+    const sphereGeo = new THREE.SphereGeometry(1, 32, 32);
+
+    // 🟢 UPGRADED: Accepts custom colors and saves them to memory
+    function createPart(
+      name,
+      group,
+      isInternal,
+      x,
+      y,
+      z,
+      scaleX,
+      scaleY,
+      scaleZ,
+      customColor = null,
+    ) {
+      const baseColor = customColor || COLOR_SKIN_BASE;
+
+      const material = new THREE.MeshStandardMaterial({
+        color: baseColor,
+        transparent: true,
+        opacity: 1,
+        depthWrite: true,
+        roughness: 0.3,
+        metalness: 0.1,
+      });
+
+      const mesh = new THREE.Mesh(sphereGeo, material);
+      mesh.position.set(x, y, z);
+      mesh.scale.set(scaleX, scaleY, scaleZ);
+
+      // Save the original color so we can revert back to it when un-clicking
+      mesh.userData = {
+        name: name,
+        isInternal: isInternal,
+        isSelected: false,
+        baseColor: baseColor,
+      };
+
+      group.add(mesh);
+      allMeshes.push(mesh);
+      return mesh;
+    }
+
+    // --- BUILD EXTERNAL MANNEQUIN (Dark Theme) ---
+    // Head & Torso
+    createPart("Face", externalGroup, false, 0, 4.5, 0.3, 0.9, 1.2, 0.8);
+    createPart(
+      "Back of Head",
+      externalGroup,
+      false,
+      0,
+      4.5,
+      -0.3,
+      0.9,
+      1.2,
+      0.8,
+    );
+    createPart("Neck", externalGroup, false, 0, 3.2, 0, 0.5, 0.6, 0.5);
+    createPart(
+      "Left Chest",
+      externalGroup,
+      false,
+      -0.8,
+      1.8,
+      0.6,
+      0.9,
+      1.2,
+      0.5,
+    );
+    createPart(
+      "Right Chest",
+      externalGroup,
+      false,
+      0.8,
+      1.8,
+      0.6,
+      0.9,
+      1.2,
+      0.5,
+    );
+    createPart(
+      "Left Upper Back",
+      externalGroup,
+      false,
+      -0.8,
+      1.8,
+      -0.6,
+      0.9,
+      1.2,
+      0.5,
+    );
+    createPart(
+      "Right Upper Back",
+      externalGroup,
+      false,
+      0.8,
+      1.8,
+      -0.6,
+      0.9,
+      1.2,
+      0.5,
+    );
+    createPart(
+      "Left Abdomen",
+      externalGroup,
+      false,
+      -0.8,
+      0,
+      0.6,
+      0.8,
+      1.2,
+      0.6,
+    );
+    createPart(
+      "Right Abdomen",
+      externalGroup,
+      false,
+      0.8,
+      0,
+      0.6,
+      0.8,
+      1.2,
+      0.6,
+    );
+    createPart(
+      "Left Lower Back",
+      externalGroup,
+      false,
+      -0.8,
+      0,
+      -0.6,
+      0.8,
+      1.2,
+      0.5,
+    );
+    createPart(
+      "Right Lower Back",
+      externalGroup,
+      false,
+      0.8,
+      0,
+      -0.6,
+      0.8,
+      1.2,
+      0.5,
+    );
+    createPart(
+      "Pelvis / Groin",
+      externalGroup,
+      false,
+      0,
+      -1.5,
+      0.3,
+      1.7,
+      0.8,
+      0.5,
+    );
+    createPart("Glutes", externalGroup, false, 0, -1.5, -0.3, 1.7, 0.8, 0.5);
+
+    // Arms
+    createPart(
+      "Left Shoulder",
+      externalGroup,
+      false,
+      -2.2,
+      2.2,
+      0,
+      0.6,
+      0.6,
+      0.6,
+    );
+    createPart(
+      "Right Shoulder",
+      externalGroup,
+      false,
+      2.2,
+      2.2,
+      0,
+      0.6,
+      0.6,
+      0.6,
+    );
+    createPart("Left Bicep", externalGroup, false, -2.5, 0.8, 0, 0.5, 1.2, 0.5);
+    createPart("Right Bicep", externalGroup, false, 2.5, 0.8, 0, 0.5, 1.2, 0.5);
+    createPart(
+      "Left Forearm",
+      externalGroup,
+      false,
+      -2.8,
+      -1.0,
+      0,
+      0.4,
+      1.0,
+      0.4,
+    );
+    createPart(
+      "Right Forearm",
+      externalGroup,
+      false,
+      2.8,
+      -1.0,
+      0,
+      0.4,
+      1.0,
+      0.4,
+    );
+    createPart("Left Hand", externalGroup, false, -2.9, -2.5, 0, 0.3, 0.6, 0.2);
+    createPart("Right Hand", externalGroup, false, 2.9, -2.5, 0, 0.3, 0.6, 0.2);
+
+    // Legs
+    createPart(
+      "Left Front Thigh",
+      externalGroup,
+      false,
+      -0.8,
+      -3.5,
+      0.2,
+      0.7,
+      1.6,
+      0.7,
+    );
+    createPart(
+      "Right Front Thigh",
+      externalGroup,
+      false,
+      0.8,
+      -3.5,
+      0.2,
+      0.7,
+      1.6,
+      0.7,
+    );
+    createPart(
+      "Left Hamstring",
+      externalGroup,
+      false,
+      -0.8,
+      -3.5,
+      -0.2,
+      0.7,
+      1.6,
+      0.7,
+    );
+    createPart(
+      "Right Hamstring",
+      externalGroup,
+      false,
+      0.8,
+      -3.5,
+      -0.2,
+      0.7,
+      1.6,
+      0.7,
+    );
+    createPart(
+      "Left Knee",
+      externalGroup,
+      false,
+      -0.8,
+      -5.2,
+      0.3,
+      0.6,
+      0.4,
+      0.6,
+    );
+    createPart(
+      "Right Knee",
+      externalGroup,
+      false,
+      0.8,
+      -5.2,
+      0.3,
+      0.6,
+      0.4,
+      0.6,
+    );
+    createPart(
+      "Left Calf",
+      externalGroup,
+      false,
+      -0.8,
+      -6.8,
+      0.1,
+      0.5,
+      1.5,
+      0.5,
+    );
+    createPart(
+      "Right Calf",
+      externalGroup,
+      false,
+      0.8,
+      -6.8,
+      0.1,
+      0.5,
+      1.5,
+      0.5,
+    );
+    createPart(
+      "Left Foot",
+      externalGroup,
+      false,
+      -0.8,
+      -8.5,
+      0.5,
+      0.4,
+      0.3,
+      0.8,
+    );
+    createPart(
+      "Right Foot",
+      externalGroup,
+      false,
+      0.8,
+      -8.5,
+      0.5,
+      0.4,
+      0.3,
+      0.8,
+    );
+
+    // --- BUILD INTERNAL ORGANS (With Distinct Colors) ---
+    createPart(
+      "Brain",
+      internalGroup,
+      true,
+      0,
+      4.6,
+      0,
+      0.6,
+      0.7,
+      0.6,
+      ORG_BRAIN,
+    );
+    createPart(
+      "Heart",
+      internalGroup,
+      true,
+      -0.3,
+      1.8,
+      0.2,
+      0.4,
+      0.5,
+      0.4,
+      ORG_HEART,
+    );
+    createPart(
+      "Left Lung",
+      internalGroup,
+      true,
+      -0.8,
+      1.8,
+      0,
+      0.5,
+      0.9,
+      0.4,
+      ORG_LUNGS,
+    );
+    createPart(
+      "Right Lung",
+      internalGroup,
+      true,
+      0.8,
+      1.8,
+      0,
+      0.5,
+      0.9,
+      0.4,
+      ORG_LUNGS,
+    );
+    createPart(
+      "Liver",
+      internalGroup,
+      true,
+      0.4,
+      0.6,
+      0.2,
+      0.8,
+      0.5,
+      0.5,
+      ORG_LIVER,
+    );
+    createPart(
+      "Stomach",
+      internalGroup,
+      true,
+      -0.5,
+      0.4,
+      0.2,
+      0.5,
+      0.4,
+      0.4,
+      ORG_STOMACH,
+    );
+    createPart(
+      "Kidneys",
+      internalGroup,
+      true,
+      0,
+      0.4,
+      -0.3,
+      0.8,
+      0.3,
+      0.3,
+      ORG_KIDNEYS,
+    );
+    createPart(
+      "Intestines",
+      internalGroup,
+      true,
+      0,
+      -0.6,
+      0.1,
+      1.0,
+      0.8,
+      0.5,
+      ORG_INTESTINES,
+    );
+
+    internalGroup.visible = false;
+
+    raycaster = new THREE.Raycaster();
+    mouse = new THREE.Vector2();
+
+    container.addEventListener("mousemove", onMouseMove);
+    container.addEventListener("click", onClick);
+
+    animate();
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  // --- INTERACTION LOGIC ---
+  function onMouseMove(event) {
+    const rect = container.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    const activeGroup = isInternalView
+      ? internalGroup.children
+      : externalGroup.children;
+    const intersects = raycaster.intersectObjects(activeGroup);
+
+    // Reset hover colors back to their specific base color or selected color
+    allMeshes.forEach((mesh) => {
+      if (!mesh.userData.isSelected) {
+        mesh.material.color.setHex(mesh.userData.baseColor);
+      } else {
+        mesh.material.color.setHex(
+          mesh.userData.isInternal ? COLOR_ORGAN_SELECT : COLOR_SKIN_SELECT,
+        );
+      }
+    });
+
+    if (intersects.length > 0) {
+      const hit = intersects[0].object;
+
+      // Apply the hover color without destroying the selection state
+      if (!hit.userData.isSelected) {
+        hit.material.color.setHex(
+          hit.userData.isInternal ? COLOR_ORGAN_HOVER : COLOR_SKIN_HOVER,
+        );
+      }
+
+      hoverLabel.innerText = hit.userData.name;
+      hoverLabel.style.display = "block";
+    } else {
+      hoverLabel.style.display = "none";
+    }
+  }
+
+  function onClick(event) {
+    const rect = container.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    const activeGroup = isInternalView
+      ? internalGroup.children
+      : externalGroup.children;
+    const intersects = raycaster.intersectObjects(activeGroup);
+
+    if (intersects.length > 0) {
+      const hit = intersects[0].object;
+      hit.userData.isSelected = !hit.userData.isSelected;
+
+      if (hit.userData.isSelected) {
+        hit.material.color.setHex(
+          hit.userData.isInternal ? COLOR_ORGAN_SELECT : COLOR_SKIN_SELECT,
+        );
+        selectedParts.add(hit.userData.name);
+      } else {
+        hit.material.color.setHex(hit.userData.baseColor);
+        selectedParts.delete(hit.userData.name);
+      }
+      updateTagsUI();
+    }
+  }
+
+  function updateTagsUI() {
+    if (selectedParts.size === 0) {
+      tagsContainer.innerHTML = `<span style="font-size: 0.85rem; color: #94a3b8; font-style: italic;">No areas selected...</span>`;
+      return;
+    }
+    tagsContainer.innerHTML = "";
+    selectedParts.forEach((part) => {
+      tagsContainer.innerHTML += `<div class="symptom-tag">🎯 ${part}</div>`;
+    });
+  }
+
+  // --- TOGGLE LOGIC ---
+  function setInternalView(active) {
+    isInternalView = active;
+    if (active) {
+      btnInternal.classList.add("active");
+      btnInternal.style.background = "white";
+      btnInternal.style.color = "var(--brand-dark)";
+      btnInternal.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
+
+      btnExternal.classList.remove("active");
+      btnExternal.style.background = "transparent";
+      btnExternal.style.color = "#64748b";
+      btnExternal.style.boxShadow = "none";
+
+      internalGroup.visible = true;
+      externalGroup.children.forEach((mesh) => {
+        mesh.material.opacity = 0.1;
+        mesh.material.depthWrite = false;
+      });
+    } else {
+      btnExternal.classList.add("active");
+      btnExternal.style.background = "white";
+      btnExternal.style.color = "var(--brand-dark)";
+      btnExternal.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
+
+      btnInternal.classList.remove("active");
+      btnInternal.style.background = "transparent";
+      btnInternal.style.color = "#64748b";
+      btnInternal.style.boxShadow = "none";
+
+      internalGroup.visible = false;
+      externalGroup.children.forEach((mesh) => {
+        mesh.material.opacity = 1;
+        mesh.material.depthWrite = true;
+      });
+    }
+  }
+
+  btnExternal.addEventListener("click", () => setInternalView(false));
+  btnInternal.addEventListener("click", () => setInternalView(true));
+
+  // --- MODAL CONTROLS ---
+  if (btnOpenMap) {
+    btnOpenMap.addEventListener("click", () => {
+      mapModal.classList.remove("hidden");
+      if (!scene) init3D();
+    });
+  }
+
+  if (btnCloseMap) {
+    btnCloseMap.addEventListener("click", () => {
+      mapModal.classList.add("hidden");
+    });
+  }
+
+  if (btnConfirm) {
+    btnConfirm.addEventListener("click", () => {
+      if (selectedParts.size > 0) {
+        const inputArea = document.getElementById("user-input");
+        const symptomsText = Array.from(selectedParts).join(", ");
+
+        if (inputArea.value.trim() === "") {
+          inputArea.value =
+            "I am experiencing pain/issues in my: " + symptomsText;
+        } else {
+          inputArea.value += ", and my: " + symptomsText;
+        }
+
+        inputArea.style.height = "auto";
+        inputArea.style.height = inputArea.scrollHeight + "px";
+
+        // Reset selections
+        selectedParts.clear();
+        allMeshes.forEach((mesh) => {
+          mesh.userData.isSelected = false;
+          mesh.material.color.setHex(mesh.userData.baseColor);
+        });
+        updateTagsUI();
+      }
+      mapModal.classList.add("hidden");
+      document.getElementById("user-input").focus();
+    });
+  }
+});

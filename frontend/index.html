@@ -11,175 +11,114 @@
     />
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   </head>
   <body>
     <nav class="navbar">
       <div class="nav-brand">🩺 Heal Bridge</div>
       <ul class="nav-links">
         <li><a href="#home">Home</a></li>
-        <li><a href="#about">Architecture</a></li>
+        <li><a href="#pathway">Architecture</a></li>
         <li>
           <a href="#" class="nav-btn launch-modal-btn">Start Diagnosis</a>
         </li>
         <li><a href="#locate">Locate Doctors</a></li>
-        <li><a href="#contact">Contact</a></li>
+        
       </ul>
     </nav>
 
-    <section id="home" class="hero">
-      <div class="hero-content">
-        <h1>Autonomous AI Medical Triage</h1>
+    <section id="home" class="hero-modern">
+      <div class="orb orb-cyan"></div>
+      <div class="orb orb-indigo"></div>
+
+      <div class="glass-hero-card">
+        <div class="trust-badge">
+          <span class="pulse-dot"></span> Powered by Groq LPU & Llama-3
+        </div>
+
+        <h1>
+          Expert Triage.<br /><span class="text-gradient">Zero Wait Time.</span>
+        </h1>
+
         <p>
-          An enterprise-grade diagnostic engine powered by Agentic RAG,
-          Scikit-Learn Naive Bayes, and Groq Llama-3. Get instant,
-          mathematically-backed symptom analysis.
+          Understand your symptoms in seconds with our clinical-grade AI. Safe,
+          private, and built on robust medical guardrails.
         </p>
-        <div class="hero-buttons">
-          <a href="#" class="btn primary-btn btn-large launch-modal-btn"
-            >Launch Triage Engine</a
-          >
-          <a href="#about" class="btn secondary-btn btn-large"
-            >View Architecture</a
-          >
+
+        <div class="hero-action">
+          <a href="#" class="btn-glow launch-modal-btn">Start Diagnosis ➔</a>
         </div>
       </div>
     </section>
 
-    <section id="about" class="architecture-section">
-      <div class="section-header">
-        <h2 class="graph-main-title">Computational Data Pipeline</h2>
-        <p class="graph-subtitle">
-          Hover over the nodes to view the real-time execution protocols of the
-          triage engine.
+    <section id="about" class="bento-section">
+      <div class="orb orb-purple"></div>
+
+      <div class="bento-header">
+        <h2>Enterprise-Grade Clinical Standards</h2>
+        <p>
+          Built with multiple layers of redundancy to ensure accuracy, privacy,
+          and patient safety.
         </p>
       </div>
 
-      <div class="graph-container">
-        <svg
-          class="graph-svg-canvas"
-          viewBox="0 0 1200 450"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            id="core-backbone"
-            d="M 50 225 C 300 -50, 300 450, 600 250 C 900 50, 900 450, 1150 225"
-            stroke="#14532d"
-            stroke-width="5"
-            stroke-linecap="round"
-          />
-          <path
-            d="M 230 115 C 230 115, 600 250, 600 250"
-            stroke="#16a34a"
-            stroke-width="2"
-            stroke-dasharray="5 5"
-            opacity="0.6"
-          />
-          <path
-            d="M 600 250 C 600 250, 970 340, 970 340"
-            stroke="#16a34a"
-            stroke-width="2"
-            stroke-dasharray="5 5"
-            opacity="0.6"
-          />
-          <path
-            d="M 230 115 C 450 -20, 750 0, 970 340"
-            stroke="#15803d"
-            stroke-width="1.5"
-            stroke-dasharray="8 4"
-            opacity="0.4"
-          />
-
-          <circle r="7" fill="#22c55e" class="pulse-particle">
-            <animateMotion
-              dur="6s"
-              repeatCount="indefinite"
-              path="M 50 225 C 300 -50, 300 450, 600 250 C 900 50, 900 450, 1150 225"
-            />
-          </circle>
-          <circle r="5" fill="#4ade80" class="pulse-particle" begin="2s">
-            <animateMotion
-              dur="6s"
-              repeatCount="indefinite"
-              path="M 50 225 C 300 -50, 300 450, 600 250 C 900 50, 900 450, 1150 225"
-            />
-          </circle>
-          <circle r="6" fill="#10b981" class="pulse-particle" begin="4s">
-            <animateMotion
-              dur="6s"
-              repeatCount="indefinite"
-              path="M 50 225 C 300 -50, 300 450, 600 250 C 900 50, 900 450, 1150 225"
-            />
-          </circle>
-        </svg>
-
-        <div class="graph-nodes-layer">
-          
-          <div class="matrix-node" style="left: 11%; top: 80px;">
-            <div class="matrix-ring"></div>
-            <div class="matrix-core">👤</div>
-            <div class="matrix-meta-tag">
-              <span class="m-title">Patient Ingestion</span>
-              <span class="m-tech">REST / Gateway</span>
-            </div>
-            <div class="matrix-hover-box">
-              <h5>Payload Context</h5>
-              <p>• Intercepts raw user chat arrays</p>
-              <p>• Extracts age & sex demographics</p>
-              <p>• Instantiates secure memory block</p>
-              <p>• Packages downstream payload</p>
-            </div>
+      <div class="bento-grid-even">
+        <div class="bento-card-clean">
+          <div class="bento-icon-wrapper">
+            <div class="bento-icon">⚡</div>
           </div>
-
-          <div class="matrix-node" style="left: 31.5%; top: 210px;">
-            <div class="matrix-ring"></div>
-            <div class="matrix-core">🧠</div>
-            <div class="matrix-meta-tag">
-              <span class="m-title">Agentic RAG</span>
-              <span class="m-tech">HuggingFace Vectors</span>
-            </div>
-            <div class="matrix-hover-box">
-              <h5>Semantic Alignment</h5>
-              <p>• Funnels text via deep encoders</p>
-              <p>• Maps layperson to clinical terms</p>
-              <p>• Executes similarity matching</p>
-              <p>• Injects context into runtime</p>
-            </div>
+          <div class="bento-content">
+            <h3>Instant Dual-Engine Triage</h3>
+            <p>
+              Utilizing a Scikit-Learn Naive Bayes mathematical model overseen
+              by a Groq Llama-3 Chief Medical Officer for blazing-fast,
+              deterministic logic.
+            </p>
           </div>
-
-          <div class="matrix-node" style="left: 51%; top: 120px;">
-            <div class="matrix-ring"></div>
-            <div class="matrix-core">📊</div>
-            <div class="matrix-meta-tag">
-              <span class="m-title">Math Engine</span>
-              <span class="m-tech">Naive Bayes Classifier</span>
-            </div>
-            <div class="matrix-hover-box">
-              <h5>Matrix Processing</h5>
-              <p>• Creates Boolean sparse matrices</p>
-              <p>• Evaluates 800+ condition weights</p>
-              <p>• Applies demographic filter blocks</p>
-              <p>• Constructs differential diagnosis</p>
-            </div>
-          </div>
-
-          <div class="matrix-node" style="left: 69%; top: 200px;">
-            <div class="matrix-ring"></div>
-            <div class="matrix-core">🩺</div>
-            <div class="matrix-meta-tag">
-              <span class="m-title">CMO Audit</span>
-              <span class="m-tech">Groq / Llama 3 70B</span>
-            </div>
-            <div class="matrix-hover-box">
-              <h5>Validation Layer</h5>
-              <p>• Feeds metrics to structural prompts</p>
-              <p>• Triggers Groq LPU fast-inference</p>
-              <p>• Applies defensive semantic checks</p>
-              <p>• Formats dual-view triage report</p>
-            </div>
-          </div>
-
         </div>
+
+        <div class="bento-card-clean">
+          <div class="bento-icon-wrapper">
+            <div class="bento-icon">🔒</div>
+          </div>
+          <div class="bento-content">
+            <h3>100% Session Privacy</h3>
+            <p>
+              Your medical data never hits a database. Our isolated environment
+              clears your exact session memory the second you close the tab.
+            </p>
+          </div>
+        </div>
+
+        <div class="bento-card-clean">
+          <div class="bento-icon-wrapper">
+            <div class="bento-icon">📄</div>
+          </div>
+          <div class="bento-content">
+            <h3>Actionable Exports</h3>
+            <p>
+              Instantly generate professional, formatted PDF clinical reports to
+              hand directly to your attending physician.
+            </p>
+          </div>
+        </div>
+
+        <div class="bento-card-clean">
+          <div class="bento-icon-wrapper">
+            <div class="bento-icon">🛡️</div>
+          </div>
+          <div class="bento-content">
+            <h3>Medical Guardrails</h3>
+            <p>
+              Hardcoded to prioritize patient safety, automatically escalating
+              critical symptoms to a RED emergency state.
+            </p>
+          </div>
+        </div>
+      </div>
     </section>
 
     <div id="triage-modal" class="modal-overlay hidden">
@@ -218,48 +157,186 @@
             </div>
           </div>
 
-          <div class="input-area-wrapper" style="display: flex; flex-direction: column; background: white; border-top: 1px solid var(--border-light);">
-            
-            <div id="file-preview-container" style="display: none; padding: 10px 16px; border-bottom: 1px dashed var(--border-light); align-items: center; gap: 10px; width: 100%; box-sizing: border-box;">
-              <div id="file-preview-icon" style="font-size: 1.2rem; flex-shrink: 0;">Doc</div>
-              <div style="flex: 1; min-width: 0;">
-                <p id="file-preview-name" style="font-size: 0.85rem; color: var(--text-dark); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0;">report.pdf</p>
+          <div
+            class="input-area-wrapper"
+            style="
+              display: flex;
+              flex-direction: column;
+              background: white;
+              border-top: 1px solid var(--border-light);
+            "
+          >
+            <div
+              id="file-preview-container"
+              style="
+                display: none;
+                padding: 10px 16px;
+                border-bottom: 1px dashed var(--border-light);
+                align-items: center;
+                gap: 10px;
+                width: 100%;
+                box-sizing: border-box;
+              "
+            >
+              <div
+                id="file-preview-icon"
+                style="font-size: 1.2rem; flex-shrink: 0"
+              >
+                Doc
               </div>
-              <button id="btn-remove-file" style="background: none; border: none; color: #ef4444; font-size: 1.5rem; cursor: pointer; padding: 0 4px; line-height: 1; flex-shrink: 0;">&times;</button>
+              <div style="flex: 1; min-width: 0">
+                <p
+                  id="file-preview-name"
+                  style="
+                    font-size: 0.85rem;
+                    color: var(--text-dark);
+                    font-weight: 600;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    margin: 0;
+                  "
+                >
+                  report.pdf
+                </p>
+              </div>
+              <button
+                id="btn-remove-file"
+                style="
+                  background: none;
+                  border: none;
+                  color: #ef4444;
+                  font-size: 1.5rem;
+                  cursor: pointer;
+                  padding: 0 4px;
+                  line-height: 1;
+                  flex-shrink: 0;
+                "
+              >
+                &times;
+              </button>
             </div>
 
+            
             <div class="input-area" id="input-area" style="border-top: none;">
-              <input type="file" id="file-upload" accept="image/jpeg, image/png, application/pdf" style="display: none;">
-              
-              <button id="btn-attach" style="background: transparent; color: #64748b; padding: 0 12px; border: none; cursor: pointer; transition: color 0.2s; display: flex; align-items: center; justify-content: center; height: 56px; flex-shrink: 0;" title="Upload Clinical Report or Image">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
-                </svg>
-              </button>
+              <input type="file" id="file-upload" accept="image/jpeg, image/png, application/pdf" style="display: none" />
 
-              <textarea
-                id="user-input"
-                rows="1"
-                placeholder="Type your message or upload a document..."
-                autocomplete="off"
-              ></textarea>
+              <div class="tool-dock">
+                <button id="btn-attach" class="tool-icon" title="Upload Document">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                </button>
+                <button id="btn-body-map" class="tool-icon" title="3D Body Map">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="4" r="2.5"></circle><path d="M12 7.5v7"></path><path d="M8 9.5l4 1.5 4-1.5"></path><path d="M9 22l3-7.5 3 7.5"></path></svg>
+                </button>
+                <button id="btn-camera" class="tool-icon" title="Scan Symptom">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                </button>
+                <button id="btn-mic" class="tool-icon mic-tool" title="Voice Input">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                </button>
+              </div>
+
+              <textarea id="user-input" rows="1" placeholder="Type your message or upload a document..." autocomplete="off"></textarea>
+
               <button id="btn-send" class="btn send-btn">Send ➔</button>
 
               <button
                 id="btn-predict"
                 class="btn"
-                style="background: var(--brand-gradient); color: white; display: none; height: 56px; padding: 0 24px; border-radius: 12px; font-weight: 600; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);"
+                style="
+                  background: var(--brand-gradient);
+                  color: white;
+                  display: none; 
+                  height: 56px;
+                  padding: 0 24px;
+                  border-radius: 12px;
+                  font-weight: 600;
+                  border: none;
+                  cursor: pointer;
+                  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+                "
               >
                 🩺 Predict
               </button>
             </div>
-          </div>
         </main>
       </div>
     </div>
+    <section id="pathway" class="stream-section">
+      <!-- 🟢 ADD THIS ORB -->
+      <div
+        class="orb orb-cyan"
+        style="top: 30%; right: -5%; left: auto; opacity: 0.2"
+      ></div>
+      <div class="stream-header">
+        <h2>The Triage Protocol</h2>
+        <p>A seamless, 4-step journey from symptoms to clinical clarity.</p>
+      </div>
+
+      <div class="stream-container">
+        <div class="stream-laser">
+          <div class="stream-laser-glow"></div>
+        </div>
+
+        <div class="stream-steps-wrapper">
+          <div class="stream-step step-up">
+            <div class="stream-card">
+              <div class="stream-icon">💬</div>
+              <h3>1. Data Intake</h3>
+              <p>
+                Chat naturally or upload lab reports. The NLP engine instantly
+                extracts demographics and symptoms into secure memory.
+              </p>
+            </div>
+            <div class="stream-dot"></div>
+          </div>
+
+          <div class="stream-step step-down">
+            <div class="stream-dot"></div>
+            <div class="stream-card">
+              <div class="stream-icon">🧠</div>
+              <h3>2. Vector Mapping</h3>
+              <p>
+                Your layperson terms are translated into medical terminology and
+                mapped across an 800+ condition database.
+              </p>
+            </div>
+          </div>
+
+          <div class="stream-step step-up">
+            <div class="stream-card">
+              <div class="stream-icon">🩺</div>
+              <h3>3. Dual-Engine Triage</h3>
+              <p>
+                A mathematical probability matrix calculates the risks, while
+                our LLM Chief Medical Officer validates for absolute safety.
+              </p>
+            </div>
+            <div class="stream-dot"></div>
+          </div>
+
+          <div class="stream-step step-down">
+            <div class="stream-dot"></div>
+            <div class="stream-card">
+              <div class="stream-icon">📋</div>
+              <h3>4. Clinical Output</h3>
+              <p>
+                Receive a color-coded severity rating, download a pristine PDF
+                report, and route directly to the nearest ER via GPS.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section id="locate" class="locate-section">
-      <div class="section-header">
+      <div
+        class="orb orb-indigo"
+        style="top: 40%; left: -5%; opacity: 0.2"
+      ></div>
+
+      <div class="section-header" style="margin-bottom: 30px">
         <h2>Find Specialists Near You</h2>
         <p>
           Connect with top-rated medical professionals and emergency care in
@@ -267,80 +344,91 @@
         </p>
       </div>
 
-      <div class="search-container">
-        <div class="search-bar">
-          <input
-            type="text"
-            id="map-search-input"
-            placeholder="Enter Zip Code, City, or Specialty..."
-          />
-          <button class="btn primary-btn" id="btn-search-map">🔍 Search</button>
-
-          <button
-            id="btn-my-location"
-            style="
-              padding: 12px 16px;
-              border-radius: 8px;
-              font-weight: 600;
-              border: 1px solid #cbd5e1;
-              background: #f8fafc;
-              color: #475569;
-              cursor: pointer;
-              transition: 0.2s;
-              margin-left: 5px;
-            "
-          >
-            📍 Near Me
-          </button>
-        </div>
-        <div class="filter-chips">
-          <button class="chip active">All Facilities</button>
-          <button class="chip">🚨 Emergency Rooms</button>
-          <button class="chip">🩺 General Physicians</button>
-          <button class="chip">👶 Pediatrics</button>
-        </div>
-      </div>
-
       <div class="locate-workspace">
-        <div class="directory-panel">
-          <div class="facility-card clinic-card">
-            <div class="card-header">
-              <h3>Metro Health Medical Center</h3>
-              <span class="status-badge emergency">⏱️ 15m wait</span>
+        <div class="locate-sidebar">
+          <div class="search-container">
+            <div class="search-bar-unified">
+              <input
+                type="text"
+                id="map-search-input"
+                placeholder="Zip Code, City, or Specialty..."
+              />
+
+              <button
+                id="btn-my-location"
+                class="location-ghost-btn"
+                title="Use GPS Location"
+              >
+                📍 <span class="loc-text">Near Me</span>
+              </button>
+
+              <div class="search-divider"></div>
+
+              <button class="btn search-circle-btn" id="btn-search-map">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </button>
             </div>
-            <p class="facility-type">🏥 General Hospital & Trauma Care</p>
-            <p class="facility-address">
-              📍 122 Medical Center Blvd, City Center
-            </p>
-            <div class="card-footer">
-              <span class="distance">🚗 1.2 miles away</span>
-              <button class="card-action-btn text-btn">Call ER</button>
+
+            <div class="filter-chips">
+              <button class="chip active">All</button>
+              <button class="chip">🚨 ERs</button>
+              <button class="chip">🩺 Clinics</button>
+              <button class="chip">👶 Peds</button>
             </div>
           </div>
 
-          <div class="facility-card">
-            <div class="card-header">
-              <h3>CareFirst Urgent Care</h3>
-              <span class="status-badge open">🟢 Open 24/7</span>
+          <div class="directory-panel">
+            <div class="facility-card clinic-card">
+              <div class="card-header">
+                <h3>Metro Health Medical Center</h3>
+                <span class="status-badge emergency">⏱️ 15m wait</span>
+              </div>
+              <p class="facility-type">🏥 General Hospital & Trauma Care</p>
+              <p class="facility-address">
+                📍 122 Medical Center Blvd, City Center
+              </p>
+              <div class="card-footer">
+                <span class="distance">🚗 1.2 miles away</span>
+                <button class="card-action-btn text-btn">Call ER</button>
+              </div>
             </div>
-            <p class="facility-type">🩺 Urgent Care & Walk-in Clinic</p>
-            <p class="facility-address">📍 404 Health Ave, Suite 10</p>
-            <div class="card-footer">
-              <span class="distance">🚗 3.5 miles away</span>
-              <button class="card-action-btn">Directions</button>
-            </div>
-          </div>
 
-          <div class="facility-card">
-            <div class="card-header">
-              <h3>St. Jude Pediatric Clinic</h3>
-              <span class="status-badge open">🟢 Open Now</span>
+            <div class="facility-card">
+              <div class="card-header">
+                <h3>CareFirst Urgent Care</h3>
+                <span class="status-badge open">🟢 Open 24/7</span>
+              </div>
+              <p class="facility-type">🩺 Urgent Care & Walk-in Clinic</p>
+              <p class="facility-address">📍 404 Health Ave, Suite 10</p>
+              <div class="card-footer">
+                <span class="distance">🚗 3.5 miles away</span>
+                <button class="card-action-btn">Directions</button>
+              </div>
             </div>
-            <p class="facility-type">👶 Specialized Pediatric Care</p>
-            <p class="facility-address">📍 710 Childrens Lane</p>
-            <div class="card-footer">
-              <span class="distance">🚗 4.8 miles away</span>
-              <button class="card-action-btn">Directions</button>
+
+            <div class="facility-card">
+              <div class="card-header">
+                <h3>St. Jude Pediatric Clinic</h3>
+                <span class="status-badge open">🟢 Open Now</span>
+              </div>
+              <p class="facility-type">👶 Specialized Pediatric Care</p>
+              <p class="facility-address">📍 710 Childrens Lane</p>
+              <div class="card-footer">
+                <span class="distance">🚗 4.8 miles away</span>
+                <button class="card-action-btn">Directions</button>
+              </div>
             </div>
           </div>
         </div>
@@ -352,37 +440,387 @@
         </div>
       </div>
     </section>
-    <div id="quality-gate-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-      <div style="background: white; padding: 30px; border-radius: 16px; max-width: 420px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;">
-        <div style="font-size: 2.5rem; margin-bottom: 10px;">⚠️</div>
-        <h3 style="margin-top: 0; color: #0f172a; font-size: 1.25rem;">Upload Guidelines</h3>
-        <p style="color: #475569; font-size: 0.95rem; line-height: 1.5; margin-bottom: 15px;">For safety and precision, please upload only <strong>typed lab results, clinical summaries, or clear images of physical symptoms</strong>.</p>
-        <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 10px; border-radius: 8px; margin-bottom: 20px;">
-          <p style="color: #ef4444; font-size: 0.85rem; margin: 0; font-weight: 600;">Handwritten notes are strictly prohibited as they can lead to dangerous AI misinterpretations.</p>
+    <div
+      id="quality-gate-modal"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+      "
+    >
+      <div
+        style="
+          background: white;
+          padding: 30px;
+          border-radius: 16px;
+          max-width: 420px;
+          text-align: center;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+          border: 1px solid #e2e8f0;
+        "
+      >
+        <div style="font-size: 2.5rem; margin-bottom: 10px">⚠️</div>
+        <h3 style="margin-top: 0; color: #0f172a; font-size: 1.25rem">
+          Upload Guidelines
+        </h3>
+        <p
+          style="
+            color: #475569;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+          "
+        >
+          For safety and precision, please upload only
+          <strong
+            >typed lab results, clinical summaries, or clear images of physical
+            symptoms</strong
+          >.
+        </p>
+        <div
+          style="
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+          "
+        >
+          <p
+            style="
+              color: #ef4444;
+              font-size: 0.85rem;
+              margin: 0;
+              font-weight: 600;
+            "
+          >
+            Handwritten notes are strictly prohibited as they can lead to
+            dangerous AI misinterpretations.
+          </p>
         </div>
-        <div style="display: flex; gap: 10px; justify-content: center;">
-          <button id="btn-cancel-upload" style="padding: 10px 16px; border: 1px solid #cbd5e1; background: white; color: #475569; border-radius: 8px; cursor: pointer; font-weight: 600; flex: 1;">Cancel</button>
-          <button id="btn-accept-upload" style="padding: 10px 16px; background: #0ea5e9; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; flex: 1; box-shadow: 0 4px 6px rgba(14, 165, 233, 0.2);">I Understand</button>
+        <div style="display: flex; gap: 10px; justify-content: center">
+          <button
+            id="btn-cancel-upload"
+            style="
+              padding: 10px 16px;
+              border: 1px solid #cbd5e1;
+              background: white;
+              color: #475569;
+              border-radius: 8px;
+              cursor: pointer;
+              font-weight: 600;
+              flex: 1;
+            "
+          >
+            Cancel
+          </button>
+          <button
+            id="btn-accept-upload"
+            style="
+              padding: 10px 16px;
+              background: #0ea5e9;
+              color: white;
+              border: none;
+              border-radius: 8px;
+              cursor: pointer;
+              font-weight: 600;
+              flex: 1;
+              box-shadow: 0 4px 6px rgba(14, 165, 233, 0.2);
+            "
+          >
+            I Understand
+          </button>
         </div>
       </div>
     </div>
+    <div id="camera-modal" class="modal-overlay hidden" style="z-index: 10000">
+      <div
+        style="
+          background: white;
+          padding: 25px;
+          border-radius: 20px;
+          max-width: 500px;
+          width: 90%;
+          text-align: center;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+        "
+      >
+        <h3
+          style="
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: var(--brand-dark);
+            font-size: 1.25rem;
+          "
+        >
+          📸 Scan Symptom
+        </h3>
 
-    <footer id="contact">
-      <div class="footer-content">
-        <h2>🩺 Heal Bridge</h2>
-        <p>Developed by Ankit Sharma | AI/ML Portfolio</p>
-        <div class="social-links">
-          <a href="#">GitHub</a>
-          <a href="#">LinkedIn</a>
-          <a href="#">Portfolio</a>
+        <div
+          style="
+            position: relative;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+          "
+        >
+          <video
+            id="camera-video"
+            autoplay
+            playsinline
+            style="
+              width: 100%;
+              max-height: 50vh;
+              object-fit: cover;
+              display: block;
+            "
+          ></video>
         </div>
-        <p class="disclaimer">
-          Disclaimer: Heal Bridge is an AI demonstration project. It is not a
-          substitute for professional medical advice, diagnosis, or treatment.
-        </p>
+
+        <div
+          style="
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+          "
+        >
+          <button
+            id="btn-close-camera"
+            style="
+              padding: 12px 24px;
+              border: 1px solid #cbd5e1;
+              background: white;
+              color: #475569;
+              border-radius: 8px;
+              font-weight: bold;
+              cursor: pointer;
+              flex: 1;
+            "
+          >
+            Cancel
+          </button>
+          <button
+            id="btn-capture"
+            style="
+              padding: 12px 24px;
+              background: #0ea5e9;
+              color: white;
+              border: none;
+              border-radius: 8px;
+              font-weight: bold;
+              cursor: pointer;
+              flex: 1;
+              box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);
+            "
+          >
+            Snap Photo
+          </button>
+        </div>
+
+        <canvas id="camera-canvas" style="display: none"></canvas>
+      </div>
+    </div>
+    <div id="bodymap-modal" class="modal-overlay hidden" style="z-index: 10000">
+      <div
+        style="
+          background: white;
+          padding: 25px;
+          border-radius: 20px;
+          max-width: 600px;
+          width: 95%;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+          display: flex;
+          flex-direction: column;
+        "
+      >
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+          "
+        >
+          <div>
+            <h3 style="margin: 0; color: var(--brand-dark); font-size: 1.25rem">
+              3D Symptom Mapper
+            </h3>
+            <p style="color: #64748b; font-size: 0.85rem; margin: 4px 0 0 0">
+              Rotate and click to select areas.
+            </p>
+          </div>
+
+          <div
+            style="
+              background: #f1f5f9;
+              padding: 4px;
+              border-radius: 8px;
+              display: flex;
+              border: 1px solid #e2e8f0;
+            "
+          >
+            <button
+              id="btn-view-external"
+              class="view-toggle active"
+              style="
+                padding: 6px 12px;
+                border: none;
+                border-radius: 6px;
+                font-size: 0.8rem;
+                font-weight: bold;
+                cursor: pointer;
+                background: white;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+                color: var(--brand-dark);
+              "
+            >
+              Skin
+            </button>
+            <button
+              id="btn-view-internal"
+              class="view-toggle"
+              style="
+                padding: 6px 12px;
+                border: none;
+                border-radius: 6px;
+                font-size: 0.8rem;
+                font-weight: bold;
+                cursor: pointer;
+                background: transparent;
+                color: #64748b;
+              "
+            >
+              Organs
+            </button>
+          </div>
+        </div>
+
+        <div
+          id="three-canvas-container"
+          style="
+            width: 100%;
+            height: 500px;
+            background: #0f172a;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+          "
+        >
+          <div
+            id="hover-label"
+            style="
+              position: absolute;
+              top: 15px;
+              left: 15px;
+              background: rgba(255, 255, 255, 0.9);
+              padding: 6px 12px;
+              border-radius: 6px;
+              font-size: 0.85rem;
+              font-weight: bold;
+              color: var(--brand-blue);
+              display: none;
+              pointer-events: none;
+              border: 1px solid #bae6fd;
+              z-index: 10;
+            "
+          ></div>
+        </div>
+
+        <div
+          id="selected-symptoms-container"
+          style="
+            min-height: 40px;
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+          "
+        >
+          <span style="font-size: 0.85rem; color: #94a3b8; font-style: italic"
+            >No areas selected...</span
+          >
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: auto">
+          <button
+            id="btn-close-bodymap"
+            style="
+              padding: 12px 24px;
+              border: 1px solid #cbd5e1;
+              background: white;
+              color: #475569;
+              border-radius: 8px;
+              font-weight: bold;
+              cursor: pointer;
+              flex: 1;
+            "
+          >
+            Cancel
+          </button>
+          <button
+            id="btn-confirm-symptoms"
+            style="
+              padding: 12px 24px;
+              background: #0ea5e9;
+              color: white;
+              border: none;
+              border-radius: 8px;
+              font-weight: bold;
+              cursor: pointer;
+              flex: 2;
+              box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);
+            "
+          >
+            Confirm Selections
+          </button>
+        </div>
+      </div>
+    </div>
+<!-- 🟢 BALANCED PROFESSIONAL FOOTER 🟢 -->
+    <!-- 🟢 REORDERED PROFESSIONAL FOOTER 🟢 -->
+    <footer id="contact" class="simple-footer">
+      <div class="footer-container">
+        
+        <!-- 1. Disclaimer First -->
+        <div class="footer-disclaimer">
+          <p><strong>Medical Emergency?</strong> This is an AI demonstration project. Please dial your local emergency services immediately for any medical crisis.</p>
+        </div>
+
+        <!-- 2. Small Divider Line -->
+        <div class="footer-divider"></div>
+
+        <!-- 3. Links & Credits Last -->
+        <div class="footer-main-row">
+          <div class="footer-brand">
+            <p>&copy; 2026 Ankit Sharma | AI Medical Triage</p>
+          </div>
+          <div class="footer-links">
+            <a href="mailto:ankitsharma1831@gmail.com">Email</a>
+            <a href="https://github.com/ankit1831" target="_blank">GitHub</a>
+            <a href="https://linkedin.com/in/sharma-ankit-" target="_blank">LinkedIn</a>
+          </div>
+        </div>
+
       </div>
     </footer>
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
+
+        
+
+        
+
     <script src="/static/script.js?v=999"></script>
   </body>
 </html>

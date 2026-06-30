@@ -2,6 +2,7 @@ import os
 os.environ["USE_TF"] = "0"
 os.environ["USE_TORCH"] = "1"
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from google import genai
@@ -26,6 +27,13 @@ import uvicorn
 load_dotenv()
 client = Groq()
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all domains (perfect for portfolios)
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows GET, POST, etc.
+    allow_headers=["*"],
+)
 # Configure Gemini API Key
 
 # 2. LOAD ASSETS
@@ -619,12 +627,10 @@ def run_followup(req: FollowUpRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# 7. SERVE THE HTML FRONTEND
-app.mount("/static", StaticFiles(directory="frontend"), name="frontend")
-
+# 7. PURE API HEALTH CHECK (Updated for Split-Stack)
 @app.get("/")
-def read_index():
-    return FileResponse("frontend/index.html")
+def read_root():
+    return {"status": "Heal Bridge Engine is Live and Operational"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)

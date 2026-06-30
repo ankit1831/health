@@ -7,6 +7,8 @@ const btnAttach = document.getElementById("btn-attach");
 const previewContainer = document.getElementById("file-preview-container");
 const previewName = document.getElementById("file-preview-name");
 const btnRemoveFile = document.getElementById("btn-remove-file");
+// Replace this with your actual URL from Hugging Face
+const BACKEND_URL = "https://ankit1831-healbridge.hf.space";
 
 let currentUploadedFile = null;
 
@@ -337,7 +339,7 @@ window.runDiagnosticPrediction = async function () {
   document.getElementById("btn-predict").style.display = "none";
 
   try {
-    const response = await fetch("/api/triage", {
+    const response = await fetch(`${BACKEND_URL}/api/triage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -487,7 +489,7 @@ btnSend.addEventListener("click", async () => {
 
       // Send to the dedicated Gemini parsing endpoint
       // Send to the dedicated Gemini parsing endpoint
-      const response = await fetch("/api/analyze-document", {
+      const response = await fetch(`${BACKEND_URL}/api/analyze-document`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -637,7 +639,7 @@ btnSend.addEventListener("click", async () => {
   if (isTriageComplete) {
     const loadingId = addLoadingBubble();
     try {
-      const response = await fetch("/api/followup", {
+      const response = await fetch(`${BACKEND_URL}/api/followup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -704,7 +706,7 @@ btnSend.addEventListener("click", async () => {
   const loadingId = addLoadingBubble();
 
   try {
-    const response = await fetch("/api/chat", {
+    const response = await fetch(`${BACKEND_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

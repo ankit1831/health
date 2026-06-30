@@ -2398,3 +2398,8 @@ window.addEventListener("DOMContentLoaded", () => {
 document
   .getElementById("btn-generate-pdf")
   .addEventListener("click", window.generatePDF);
+
+document.getElementById("btn-toggle-menu").addEventListener("click", () => {
+  const menu = document.getElementById("utility-menu");
+  menu.classList.toggle("active");
+});

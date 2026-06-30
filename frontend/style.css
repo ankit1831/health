@@ -2010,3 +2010,50 @@ body {
 #contact {
   scroll-margin-top: 90px; /* Adjust this value based on your navbar height */
 }
+
+/* Mobile Optimizations */
+@media (max-width: 600px) {
+  /* Hide/Show Menu */
+  .utility-menu {
+    display: none; /* Hidden by default on mobile */
+    position: absolute;
+    bottom: 70px;
+    left: 10px;
+    background: white;
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    gap: 10px;
+  }
+
+  .utility-menu.active {
+    display: flex; /* Shown when toggled */
+  }
+
+  .mobile-only-btn {
+    display: block; /* Show toggle button */
+    background: #f1f5f9;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Shrink Main Buttons */
+  #btn-send,
+  #btn-predict {
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    white-space: nowrap;
+  }
+}
+
+/* Hide toggle button on desktop */
+@media (min-width: 601px) {
+  .mobile-only-btn {
+    display: none;
+  }
+  .utility-menu {
+    display: flex;
+  }
+}

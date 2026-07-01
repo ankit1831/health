@@ -424,7 +424,7 @@ window.runDiagnosticPrediction = async function () {
                 <button class="speaker-btn" style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; border: 1px solid #bae6fd; background: #f0f9ff; color: #0ea5e9; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px;" onclick="window.speakText(document.getElementById('pat-${uniqueId}').innerText, this)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg> Listen
                 </button>
-                // Add this inside your action-chips div
+              
 <button id="btn-translate-${uniqueId}" 
         style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; border: 1px solid #bae6fd; background: #f0f9ff; color: #0ea5e9; cursor: pointer; transition: 0.2s;" 
         onclick="window.toggleLanguage('pat-${uniqueId}', this)">

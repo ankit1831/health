@@ -20,6 +20,13 @@ const btnAcceptUpload = document.getElementById("btn-accept-upload");
 if (typeof marked !== "undefined") {
   marked.setOptions({ breaks: true });
 }
+// 🟢 FIX: Keep chat pegged to the bottom when the mobile keyboard opens/closes
+window.addEventListener("resize", () => {
+  const chatContainer = document.getElementById("chat-box");
+  if (chatContainer) {
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+});
 btnAttach.addEventListener("click", () => {
   qualityModal.style.display = "flex";
 });

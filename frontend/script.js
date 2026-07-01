@@ -347,7 +347,6 @@ window.runDiagnosticPrediction = async function () {
   // 🟢 DISABLE BUTTONS TO PREVENT DOUBLE-CLICK CRASHES 🟢
   document.getElementById("btn-predict").disabled = true;
   document.getElementById("btn-send").disabled = true;
-  userInput.readOnly = true;
   const loadingId = addLoadingBubble(true);
   document.getElementById("btn-predict").style.display = "none";
 
@@ -459,8 +458,6 @@ window.runDiagnosticPrediction = async function () {
   } finally {
     document.getElementById("btn-predict").disabled = false;
     document.getElementById("btn-send").disabled = false;
-    userInput.readOnly = false;
-    userInput.focus({ preventScroll: true });
   }
 };
 
@@ -478,10 +475,6 @@ btnSend.addEventListener("click", async () => {
 
   btnSend.disabled = true;
   document.getElementById("btn-predict").disabled = true;
-
-  // 🟢 FIX: Lock the text box so they can't type, but DON'T disable it.
-  userInput.readOnly = true;
-  userInput.placeholder = "Processing... Please wait.";
 
   // 1. Handle File Uploads First
   if (currentUploadedFile) {
@@ -644,8 +637,6 @@ btnSend.addEventListener("click", async () => {
     } finally {
       btnSend.disabled = false;
       document.getElementById("btn-predict").disabled = false;
-      userInput.readOnly = false;
-      userInput.focus({ preventScroll: true });
     }
     return; // Stop the function here so it doesn't trigger standard chat
   }
@@ -680,8 +671,6 @@ btnSend.addEventListener("click", async () => {
       // 🟢 FIX: Re-enable the buttons so you can ask multiple questions!
       btnSend.disabled = false;
       document.getElementById("btn-predict").disabled = false;
-      userInput.readOnly = false;
-      userInput.focus({ preventScroll: true });
     }
     return;
   }
@@ -872,8 +861,6 @@ btnSend.addEventListener("click", async () => {
   } finally {
     btnSend.disabled = false;
     document.getElementById("btn-predict").disabled = false;
-    userInput.readOnly = false;
-    userInput.focus({ preventScroll: true });
   }
 });
 

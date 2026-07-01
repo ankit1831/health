@@ -498,7 +498,9 @@ body {
   display: flex;
   flex-direction: column;
   background: transparent;
-  min-width: 0; /* CRITICAL: Allows flex child to shrink properly */
+  min-width: 0;
+  height: 100%; /* Let it take available space */
+  min-height: 0; /* CRITICAL: Allows flex child to shrink properly */
 }
 
 .chat-header {
@@ -517,6 +519,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  overflow-y: auto;
+  min-height: 0;
 }
 .message {
   display: flex;
@@ -638,15 +642,9 @@ body {
     left: 0;
   }
   .modal-overlay .app-container {
-    width: 98% !important;
-    /* Use 'dvh' (dynamic viewport height) which updates when the keyboard opens */
-    height: 90dvh !important;
-    display: flex;
-    background: rgba(255, 255, 255, 0.95);
+    width: 98% !important; /* Increases the overall triage agent width */
+    height: 92vh !important;
     border-radius: 16px !important;
-    overflow: hidden;
-    position: absolute;
-    bottom: 0; /* Pins the container to the bottom so it doesn't float */
   }
 
   /* --- 2. Fix the "Odd White Box" edge-to-edge issue --- */

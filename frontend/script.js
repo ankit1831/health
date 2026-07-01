@@ -21,12 +21,7 @@ if (typeof marked !== "undefined") {
   marked.setOptions({ breaks: true });
 }
 // 🟢 FIX: Keep chat pegged to the bottom when the mobile keyboard opens/closes
-window.addEventListener("resize", () => {
-  const chatContainer = document.getElementById("chat-box");
-  if (chatContainer) {
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-  }
-});
+
 btnAttach.addEventListener("click", () => {
   qualityModal.style.display = "flex";
 });
@@ -785,13 +780,13 @@ btnSend.addEventListener("click", async () => {
             contentDiv.innerHTML = marked.parse(fullAiReply);
             // 🟢 FIX: Force the browser to render the text before calculating the scroll height
             // Change the scroll logic to this
-            requestAnimationFrame(() => {
+            // Force the chat to the bottom without relying on animation frames
+            const chatBox = document.getElementById("chat-box");
+            chatBox.scrollTop = chatBox.scrollHeight;
+            // A forced override to ensure it stays at the bottom
+            setTimeout(() => {
               chatBox.scrollTop = chatBox.scrollHeight;
-              // Add a secondary nudge for mobile browsers that are slow to resize
-              setTimeout(() => {
-                chatBox.scrollTop = chatBox.scrollHeight;
-              }, 300);
-            });
+            }, 100);
           }
         }
       }

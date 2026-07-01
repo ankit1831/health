@@ -638,9 +638,15 @@ body {
     left: 0;
   }
   .modal-overlay .app-container {
-    width: 98% !important; /* Increases the overall triage agent width */
-    height: 92vh !important;
+    width: 98% !important;
+    /* Use 'dvh' (dynamic viewport height) which updates when the keyboard opens */
+    height: 90dvh !important;
+    display: flex;
+    background: rgba(255, 255, 255, 0.95);
     border-radius: 16px !important;
+    overflow: hidden;
+    position: absolute;
+    bottom: 0; /* Pins the container to the bottom so it doesn't float */
   }
 
   /* --- 2. Fix the "Odd White Box" edge-to-edge issue --- */

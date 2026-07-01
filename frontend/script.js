@@ -179,14 +179,21 @@ function addMessage(text, sender) {
     speakerBtn.title = "Listen to answer";
     speakerBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
 
-    // 👇 ADD THIS ONE LINE RIGHT HERE 👇
+    // 🟢 REMOVED margin-top and added vertical-align so it sits perfectly inline
     speakerBtn.style.cssText =
-      "display: inline-block; margin-top: 10px; margin-left: 8px; cursor: pointer; color: #94a3b8;";
+      "display: inline-block; margin-left: 8px; cursor: pointer; color: #94a3b8; vertical-align: middle;";
 
     speakerBtn.onclick = function () {
       window.speakText(text, this);
     };
-    contentDiv.appendChild(speakerBtn); // <-- Notice this is contentDiv, perfectly correct.
+
+    // 🟢 MAGIC TRICK: Find the last markdown paragraph and put the button INSIDE it
+    const lastP = contentDiv.querySelector("p:last-of-type");
+    if (lastP) {
+      lastP.appendChild(speakerBtn);
+    } else {
+      contentDiv.appendChild(speakerBtn);
+    }
   }
 
   msgDiv.appendChild(contentDiv);
@@ -772,8 +779,7 @@ btnSend.addEventListener("click", async () => {
                 document.getElementById("ui-sex").innerText = patientSex;
               }
             }
-          }
-          else if (dataObj.type === "chunk") {
+          } else if (dataObj.type === "chunk") {
             fullAiReply += dataObj.text;
             contentDiv.innerHTML = marked.parse(fullAiReply);
             chatBox.scrollTop = chatBox.scrollHeight;
@@ -787,14 +793,22 @@ btnSend.addEventListener("click", async () => {
     speakerBtn.title = "Listen to answer";
     speakerBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
 
-    // 👇 ADD THIS ONE LINE RIGHT HERE 👇
+    // 🟢 REMOVED margin-top and added vertical-align so it sits perfectly inline
     speakerBtn.style.cssText =
-      "display: inline-block; margin-top: 10px; margin-left: 8px; cursor: pointer; color: #94a3b8;";
+      "display: inline-block; margin-left: 8px; cursor: pointer; color: #94a3b8; vertical-align: middle;";
 
     speakerBtn.onclick = function () {
       window.speakText(fullAiReply, this);
     };
-    contentDiv.appendChild(speakerBtn); // <-- Notice this is contentDiv, perfectly correct.
+
+    // 🟢 MAGIC TRICK: Find the last markdown paragraph and put the button INSIDE it
+    const lastP = contentDiv.querySelector("p:last-of-type");
+    if (lastP) {
+      lastP.appendChild(speakerBtn);
+    } else {
+      contentDiv.appendChild(speakerBtn);
+    }
+
     chatBox.scrollTop = chatBox.scrollHeight;
 
     // --- Post-Stream Processing ---

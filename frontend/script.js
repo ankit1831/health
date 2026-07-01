@@ -773,9 +773,6 @@ btnSend.addEventListener("click", async () => {
               }
             }
           }
-
-          // Handle Text Chunks (The Typewriter Effect)
-          // Handle Text Chunks (The Typewriter Effect)
           else if (dataObj.type === "chunk") {
             fullAiReply += dataObj.text;
             contentDiv.innerHTML = marked.parse(fullAiReply);

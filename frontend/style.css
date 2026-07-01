@@ -713,6 +713,23 @@ body {
     padding-left: 10px;
     padding-right: 10px;
   }
+  /* --- 5. Expand Chat Bubbles & Fix Stretched Height --- */
+
+  /* Reduce the empty space on the far left and right of the screen */
+  .chat-box {
+    padding: 20px 12px !important;
+  }
+
+  /* Increase the maximum width of all messages */
+  .message-content {
+    max-width: 90% !important;
+    padding: 14px 16px !important; /* Slightly tighter internal padding */
+  }
+
+  /* Specifically force the AI messages, CMO replies, and the Report to take up maximum space */
+  .ai-message .message-content {
+    max-width: 96% !important;
+  }
 }
 
 /* DIAGNOSIS TABS */

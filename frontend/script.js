@@ -78,16 +78,21 @@ document.getElementById("user-input").placeholder =
   "Type your symptoms here (Type 'predict' when ready)...";
 
 // --- MODAL LOGIC ---
+// --- MODAL LOGIC ---
 const modal = document.getElementById("triage-modal");
 document.querySelectorAll(".launch-modal-btn").forEach((btn) => {
   btn.addEventListener("click", (e) => {
     e.preventDefault();
     modal.classList.remove("hidden");
+    // 🟢 NEW: Freeze the background website
+    document.body.style.overflow = "hidden";
   });
 });
-document
-  .getElementById("close-modal")
-  .addEventListener("click", () => modal.classList.add("hidden"));
+document.getElementById("close-modal").addEventListener("click", () => {
+  modal.classList.add("hidden");
+  // 🟢 NEW: Unfreeze the background website
+  document.body.style.overflow = "";
+});
 
 // ==========================================
 // 🟢 NEW: SESSION PERSISTENCE LOGIC 🟢
@@ -383,9 +388,7 @@ window.runDiagnosticPrediction = async function () {
       // Auto-Trigger the GPS Map!
       setTimeout(() => {
         window.findNearestHospitals();
-        document
-          .getElementById("locate")
-          .scrollIntoView({ behavior: "smooth" });
+        document.getElementById("locate");
       }, 1500);
     } else if (severityColor === "YELLOW") {
       borderStyle = "border: 3px solid #ffbb33; background-color: #fffcf0;";
@@ -421,7 +424,7 @@ window.runDiagnosticPrediction = async function () {
                 </button>
 
                 <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; background: #1e293b; color: white; cursor: pointer; transition: 0.2s;" id="btn-generate-pdf">Download Report</button>
-                <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; background: #ef4444; color: white; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('triage-modal').classList.add('hidden'); document.getElementById('locate').scrollIntoView({ behavior: 'smooth' }); window.findNearestHospitals();">View Nearby Hospitals</button>
+                <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; background: #ef4444; color: white; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('triage-modal').classList.add('hidden'); document.body.style.overflow=''; document.getElementById('locate').scrollIntoView({ behavior: 'smooth' }); window.findNearestHospitals();">View Nearby Hospitals</button>
             </div>
         </div>
     `;

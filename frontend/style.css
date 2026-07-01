@@ -1012,23 +1012,31 @@ iframe {
 /* ==========================================
    🟢 BALANCED PROFESSIONAL FOOTER
    ========================================== */
+/* 1. Slash the massive top and bottom padding */
 .simple-footer {
-  background: #111827; /* Neutral Deep Slate - No blue tint */
-  color: #9ca3af; /* Slightly lighter text for readability */
-  padding: 60px 5% 40px 5%;
-  border-top: 1px solid #1f2937; /* Matches the slate background */
+  background: #111827;
+  color: #9ca3af;
+  padding: 25px 5% 20px 5%; /* Reduced from 60px top / 40px bottom */
+  border-top: 1px solid #1f2937;
+}
+
+/* 2. Shrink the gap above and below the horizontal line */
+.footer-divider {
+  border-top: 1px solid #1f2937;
+  margin: 15px 0; /* Reduced from 25px */
+}
+
+/* 3. Remove the invisible space pushing the bottom down */
+.footer-main-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0; /* Completely removed the old 30px margin */
 }
 
 .footer-container {
   max-width: 1100px;
   margin: 0 auto;
-}
-
-.footer-main-row {
-  display: flex;
-  justify-content: space-between; /* Pushes brand to left, links to right */
-  align-items: center;
-  margin-bottom: 30px;
 }
 
 .footer-links {
@@ -1051,10 +1059,7 @@ iframe {
 /* ==========================================
    🟢 FOOTER DIVIDER LINE
    ========================================== */
-.footer-divider {
-  border-top: 1px solid #1f2937;
-  margin: 25px 0;
-}
+
 /* Ensure the disclaimer looks good at the top */
 .footer-disclaimer {
   text-align: left;
@@ -1074,7 +1079,7 @@ iframe {
 @media (max-width: 768px) {
   .footer-main-row {
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
     text-align: center;
   }
 }

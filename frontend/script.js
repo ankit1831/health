@@ -1230,7 +1230,14 @@ async function fetchRealHospitals(searchLat, searchLon) {
         const { place, placeLat, placeLon, distance } = item;
         const name = place.tags.name;
 
-        const isER = place.tags.emergency === "yes";
+        // Make the AI smarter by checking the name if the emergency tag is missing
+        const nameLow = place.tags.name ? place.tags.name.toLowerCase() : "";
+        const isER =
+          place.tags.emergency === "yes" ||
+          nameLow.includes("hospital") ||
+          nameLow.includes("trauma") ||
+          nameLow.includes("institute") ||
+          nameLow.includes("medical college");
         let facilityCategory = "general";
         let typeText = "🏥 General Hospital";
         let emergencyTag = `<span class="status-badge open">🟢 General Care</span>`;

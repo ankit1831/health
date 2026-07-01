@@ -715,20 +715,26 @@ body {
   }
   /* --- 5. Expand Chat Bubbles & Fix Stretched Height --- */
 
-  /* Reduce the empty space on the far left and right of the screen */
+  /* 1. Push the entire chat stream to the extreme edges of the phone */
   .chat-box {
-    padding: 20px 12px !important;
+    padding: 15px 6px !important;
   }
 
-  /* Increase the maximum width of all messages */
-  .message-content {
-    max-width: 90% !important;
-    padding: 14px 16px !important; /* Slightly tighter internal padding */
-  }
-
-  /* Specifically force the AI messages, CMO replies, and the Report to take up maximum space */
+  /* 2. Stretch the AI bubbles to full width and reduce their inner borders */
   .ai-message .message-content {
-    max-width: 96% !important;
+    max-width: 98% !important;
+    width: 100% !important; /* Forces the Diagnosis Report to stretch */
+    padding: 12px !important; /* Tighter padding for standard AI text */
+  }
+
+  /* 3. THE MAGIC TRICK: Strip the 25px hardcoded padding from the Diagnosis Report */
+  .ai-message .message-content > div[style*="padding: 25px"] {
+    padding: 12px !important;
+  }
+
+  /* 4. Keep User bubbles slightly constrained so they still look like chat bubbles */
+  .user-message .message-content {
+    max-width: 88% !important;
   }
 }
 

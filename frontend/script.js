@@ -458,6 +458,7 @@ window.runDiagnosticPrediction = async function () {
   } finally {
     document.getElementById("btn-predict").disabled = false;
     document.getElementById("btn-send").disabled = false;
+    userInput.focus({ preventScroll: true });
   }
 };
 
@@ -637,6 +638,7 @@ btnSend.addEventListener("click", async () => {
     } finally {
       btnSend.disabled = false;
       document.getElementById("btn-predict").disabled = false;
+      userInput.focus({ preventScroll: true });
     }
     return; // Stop the function here so it doesn't trigger standard chat
   }
@@ -671,6 +673,7 @@ btnSend.addEventListener("click", async () => {
       // 🟢 FIX: Re-enable the buttons so you can ask multiple questions!
       btnSend.disabled = false;
       document.getElementById("btn-predict").disabled = false;
+      userInput.focus({ preventScroll: true });
     }
     return;
   }
@@ -781,8 +784,13 @@ btnSend.addEventListener("click", async () => {
             fullAiReply += dataObj.text;
             contentDiv.innerHTML = marked.parse(fullAiReply);
             // 🟢 FIX: Force the browser to render the text before calculating the scroll height
+            // Change the scroll logic to this
             requestAnimationFrame(() => {
               chatBox.scrollTop = chatBox.scrollHeight;
+              // Add a secondary nudge for mobile browsers that are slow to resize
+              setTimeout(() => {
+                chatBox.scrollTop = chatBox.scrollHeight;
+              }, 300);
             });
           }
         }
@@ -861,6 +869,7 @@ btnSend.addEventListener("click", async () => {
   } finally {
     btnSend.disabled = false;
     document.getElementById("btn-predict").disabled = false;
+    userInput.focus({ preventScroll: true });
   }
 });
 

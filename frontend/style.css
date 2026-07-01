@@ -2240,7 +2240,16 @@ body {
   animation: softPulse 2s infinite;
   border: 1px solid rgba(14, 165, 233, 0.2) !important; /* Makes the glow pop more */
 }
-/* 🟢 FIX: Prevent smooth-scroll from breaking the AI typewriter auto-scroll */
 .chat-box {
-  scroll-behavior: auto !important;
+  overflow-y: auto !important;
+  padding-bottom: 20px !important; /* Ensures the last message isn't cut off */
+  scroll-behavior: auto !important; /* Removes the "slide" delay */
+}
+
+/* Add this to force the app to respect the visual viewport */
+.app-container {
+  height: 100vh !important; /* Force full height */
+  padding-bottom: env(
+    safe-area-inset-bottom
+  ); /* Respects modern mobile home bars */
 }

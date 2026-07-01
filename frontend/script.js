@@ -1291,35 +1291,6 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return R * c * 1.45;
 }
 
-// --- FILTER CHIP LOGIC ---
-document.querySelectorAll(".filter-chips .chip").forEach((chip) => {
-  chip.addEventListener("click", (e) => {
-    // 1. Remove active state from all chips
-    document
-      .querySelectorAll(".filter-chips .chip")
-      .forEach((c) => c.classList.remove("active"));
-
-    // 2. Add active state to the clicked chip
-    e.target.classList.add("active");
-
-    const filterText = e.target.innerText.toLowerCase();
-    const allCards = document.querySelectorAll(".facility-card");
-
-    // 3. Loop through cards and show/hide based on the category
-    allCards.forEach((card) => {
-      const category = card.getAttribute("data-category");
-
-      if (filterText.includes("all")) {
-        card.style.display = "block"; // Show everything
-      } else if (filterText.includes("er") && category === "emergency") {
-        card.style.display = "block"; // Show only if it has an ER
-      } else {
-        card.style.display = "none"; // Hide everything else
-      }
-    });
-  });
-});
-
 // --- NEW BUTTON LOGIC: "NEAR ME" ---
 const btnMyLocation = document.getElementById("btn-my-location");
 if (btnMyLocation) {

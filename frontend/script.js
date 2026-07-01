@@ -778,15 +778,9 @@ btnSend.addEventListener("click", async () => {
           } else if (dataObj.type === "chunk") {
             fullAiReply += dataObj.text;
             contentDiv.innerHTML = marked.parse(fullAiReply);
-            // 🟢 FIX: Force the browser to render the text before calculating the scroll height
-            // Change the scroll logic to this
-            // Force the chat to the bottom without relying on animation frames
+            // Simple, direct scroll. Nothing else.
             const chatBox = document.getElementById("chat-box");
             chatBox.scrollTop = chatBox.scrollHeight;
-            // A forced override to ensure it stays at the bottom
-            setTimeout(() => {
-              chatBox.scrollTop = chatBox.scrollHeight;
-            }, 100);
           }
         }
       }

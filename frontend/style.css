@@ -519,8 +519,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  overflow-y: auto;
-  min-height: 0;
 }
 .message {
   display: flex;

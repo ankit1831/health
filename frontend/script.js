@@ -453,7 +453,8 @@ window.runDiagnosticPrediction = async function () {
   } finally {
     document.getElementById("btn-predict").disabled = false;
     document.getElementById("btn-send").disabled = false;
-    userInput.focus({ preventScroll: true });
+    userInput.disabled = false; // Simple enable
+    userInput.focus();
   }
 };
 
@@ -633,7 +634,8 @@ btnSend.addEventListener("click", async () => {
     } finally {
       btnSend.disabled = false;
       document.getElementById("btn-predict").disabled = false;
-      userInput.focus({ preventScroll: true });
+      userInput.disabled = false; // Simple enable
+      userInput.focus();
     }
     return; // Stop the function here so it doesn't trigger standard chat
   }
@@ -668,7 +670,8 @@ btnSend.addEventListener("click", async () => {
       // 🟢 FIX: Re-enable the buttons so you can ask multiple questions!
       btnSend.disabled = false;
       document.getElementById("btn-predict").disabled = false;
-      userInput.focus({ preventScroll: true });
+      userInput.disabled = false; // Simple enable
+      userInput.focus();
     }
     return;
   }
@@ -779,7 +782,7 @@ btnSend.addEventListener("click", async () => {
             fullAiReply += dataObj.text;
             contentDiv.innerHTML = marked.parse(fullAiReply);
             // Simple, direct scroll. Nothing else.
-            const chatBox = document.getElementById("chat-box");
+
             chatBox.scrollTop = chatBox.scrollHeight;
           }
         }
@@ -858,7 +861,8 @@ btnSend.addEventListener("click", async () => {
   } finally {
     btnSend.disabled = false;
     document.getElementById("btn-predict").disabled = false;
-    userInput.focus({ preventScroll: true });
+    userInput.disabled = false; // Simple enable
+    userInput.focus();
   }
 });
 

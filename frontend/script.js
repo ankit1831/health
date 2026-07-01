@@ -16,7 +16,10 @@ let currentUploadedFile = null;
 const qualityModal = document.getElementById("quality-gate-modal");
 const btnCancelUpload = document.getElementById("btn-cancel-upload");
 const btnAcceptUpload = document.getElementById("btn-accept-upload");
-
+// Configure marked.js to handle newlines naturally
+if (typeof marked !== "undefined") {
+  marked.setOptions({ breaks: true });
+}
 btnAttach.addEventListener("click", () => {
   qualityModal.style.display = "flex";
 });
@@ -168,15 +171,8 @@ function addMessage(text, sender) {
   const contentDiv = document.createElement("div");
   contentDiv.classList.add("message-content");
 
-  // 🟢 FIX 2: MARKDOWN PARSER (Handles Bold, Italic, and Newlines)
-  let formattedText = text.replace(/\n/g, "<br>");
-  formattedText = formattedText.replace(
-    /\*\*(.*?)\*\*/g,
-    "<strong>$1</strong>",
-  ); // Bold
-  formattedText = formattedText.replace(/\*(.*?)\*/g, "<em>$1</em>"); // Italic
-
-  contentDiv.innerHTML = formattedText;
+  // 🟢 FIX 2: DYNAMIC MARKDOWN PARSER
+  contentDiv.innerHTML = marked.parse(text);
   if (sender === "ai") {
     const speakerBtn = document.createElement("button");
     speakerBtn.className = "speaker-btn";
@@ -779,10 +775,11 @@ btnSend.addEventListener("click", async () => {
           }
 
           // Handle Text Chunks (The Typewriter Effect)
+          // Handle Text Chunks (The Typewriter Effect)
           else if (dataObj.type === "chunk") {
             fullAiReply += dataObj.text;
-            contentDiv.innerHTML = fullAiReply.replace(/\n/g, "<br>");
-            chatBox.scrollTop = chatBox.scrollHeight; // Keep scrolling down as it types
+            contentDiv.innerHTML = marked.parse(fullAiReply);
+            chatBox.scrollTop = chatBox.scrollHeight;
           }
         }
       }
@@ -1248,7 +1245,8 @@ async function fetchRealHospitals(searchLat, searchLon) {
 
         // 🏆 THE REAL FIX 3: OFFICIAL GOOGLE MAPS NAVIGATION URL 🏆
         // 🏆 FIX 3: Official Google Maps Directions API
-        const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${placeLat},${placeLon}`;
+        const encodedName = encodeURIComponent(name);
+        const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedName}+${placeLat},${placeLon}`;
         const cardHTML = `
           <div class="facility-card" data-category="${facilityCategory}">
             <div class="card-header">

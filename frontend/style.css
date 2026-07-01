@@ -737,7 +737,13 @@ body {
     max-width: 88% !important;
   }
 }
-
+/* 🟢 ULTIMATE BACKGROUND FREEZE 🟢 */
+body.modal-open-lock {
+  overflow: hidden !important;
+  height: 100vh !important;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+}
 /* DIAGNOSIS TABS */
 .report-container {
   background: white;

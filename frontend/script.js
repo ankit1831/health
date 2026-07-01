@@ -78,20 +78,19 @@ document.getElementById("user-input").placeholder =
   "Type your symptoms here (Type 'predict' when ready)...";
 
 // --- MODAL LOGIC ---
-// --- MODAL LOGIC ---
 const modal = document.getElementById("triage-modal");
 document.querySelectorAll(".launch-modal-btn").forEach((btn) => {
   btn.addEventListener("click", (e) => {
     e.preventDefault();
     modal.classList.remove("hidden");
-    // 🟢 NEW: Freeze the background website
-    document.body.style.overflow = "hidden";
+    // 🟢 APPLIES THE NUCLEAR LOCK
+    document.body.classList.add("modal-open-lock");
   });
 });
 document.getElementById("close-modal").addEventListener("click", () => {
   modal.classList.add("hidden");
-  // 🟢 NEW: Unfreeze the background website
-  document.body.style.overflow = "";
+  // 🟢 REMOVES THE LOCK
+  document.body.classList.remove("modal-open-lock");
 });
 
 // ==========================================
@@ -295,7 +294,7 @@ function removeLoadingBubble(id) {
   const bottomBtns = document.querySelectorAll("button");
   if (chatInput) {
     chatInput.disabled = false;
-    chatInput.focus();
+    chatInput.focus({ preventScroll: true });
   }
   bottomBtns.forEach((btn) => (btn.disabled = false));
 }
@@ -424,7 +423,7 @@ window.runDiagnosticPrediction = async function () {
                 </button>
 
                 <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; background: #1e293b; color: white; cursor: pointer; transition: 0.2s;" id="btn-generate-pdf">Download Report</button>
-                <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; background: #ef4444; color: white; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('triage-modal').classList.add('hidden'); document.body.style.overflow=''; document.getElementById('locate').scrollIntoView({ behavior: 'smooth' }); window.findNearestHospitals();">View Nearby Hospitals</button>
+                <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; background: #ef4444; color: white; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('triage-modal').classList.add('hidden'); document.body.classList.remove('modal-open-lock'); document.getElementById('locate').scrollIntoView({ behavior: 'smooth' }); window.findNearestHospitals();">View Nearby Hospitals</button>
             </div>
         </div>
     `;
@@ -452,7 +451,7 @@ window.runDiagnosticPrediction = async function () {
     document.getElementById("btn-predict").disabled = false;
     document.getElementById("btn-send").disabled = false;
     userInput.disabled = false;
-    userInput.focus();
+    userInput.focus({ preventScroll: true });
   }
 };
 
@@ -634,7 +633,7 @@ btnSend.addEventListener("click", async () => {
       btnSend.disabled = false;
       document.getElementById("btn-predict").disabled = false;
       userInput.disabled = false;
-      userInput.focus();
+      userInput.focus({ preventScroll: true });
     }
     return; // Stop the function here so it doesn't trigger standard chat
   }
@@ -670,7 +669,7 @@ btnSend.addEventListener("click", async () => {
       btnSend.disabled = false;
       document.getElementById("btn-predict").disabled = false;
       userInput.disabled = false;
-      userInput.focus();
+      userInput.focus({ preventScroll: true });
     }
     return;
   }
@@ -854,7 +853,7 @@ btnSend.addEventListener("click", async () => {
     btnSend.disabled = false;
     document.getElementById("btn-predict").disabled = false;
     userInput.disabled = false;
-    userInput.focus();
+    userInput.focus({ preventScroll: true });
   }
 });
 
@@ -908,7 +907,7 @@ window.extendChat = function (boxId) {
   const userInput = document.getElementById("user-input");
   userInput.disabled = false;
   document.getElementById("btn-send").disabled = false;
-  userInput.focus();
+  userInput.focus({ preventScroll: true });
 
   userInput.value = "I have more symptoms I want to discuss.";
   document.getElementById("btn-send").click();

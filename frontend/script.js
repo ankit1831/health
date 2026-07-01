@@ -424,6 +424,15 @@ window.runDiagnosticPrediction = async function () {
                 <button class="speaker-btn" style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; border: 1px solid #bae6fd; background: #f0f9ff; color: #0ea5e9; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px;" onclick="window.speakText(document.getElementById('pat-${uniqueId}').innerText, this)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg> Listen
                 </button>
+                // Add this inside your action-chips div
+<button id="btn-translate-${uniqueId}" 
+        style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; border: 1px solid #bae6fd; background: #f0f9ff; color: #0ea5e9; cursor: pointer; transition: 0.2s;" 
+        onclick="window.toggleLanguage('pat-${uniqueId}', this)">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 8l6 6"></path><path d="M12 11l6-6"></path>
+        <path d="M2 12h20"></path><path d="M12 2v20"></path>
+    </svg> A/अ
+</button>
 
                 <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; background: #1e293b; color: white; cursor: pointer; transition: 0.2s;" id="btn-generate-pdf">Download Report</button>
                 <button style="padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; background: #ef4444; color: white; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('triage-modal').classList.add('hidden'); document.body.classList.remove('modal-open-lock'); document.getElementById('locate').scrollIntoView({ behavior: 'smooth' }); window.findNearestHospitals();">View Nearby Hospitals</button>
@@ -2447,3 +2456,42 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+// Add this to the bottom of script.js
+window.toggleLanguage = async function (contentId, btn) {
+  const contentDiv = document.getElementById(contentId);
+  const isHindi = btn.getAttribute("data-lang") === "hi";
+
+  // 🟢 Visual feedback while loading
+  const originalText = contentDiv.innerText;
+  btn.innerHTML = "Processing...";
+
+  try {
+    if (!isHindi) {
+      // Translate to Hindi
+      // Replace '/api/translate' with your actual backend endpoint
+      const response = await fetch(`${BACKEND_URL}/api/translate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: contentDiv.innerHTML, target: "hi" }),
+      });
+      const data = await response.json();
+      contentDiv.innerHTML = data.translated_text; // Ensure your backend returns this
+      btn.setAttribute("data-lang", "hi");
+      btn.innerHTML = "English";
+    } else {
+      // Revert to English (using the original report data we have in memory)
+      contentDiv.innerHTML = window
+        .highlightMedicalTerms(
+          currentReportData.patientReport,
+          currentReportData.symptoms,
+        )
+        .replace(/\n/g, "<br>");
+      btn.setAttribute("data-lang", "en");
+      btn.innerHTML = "A/अ";
+    }
+  } catch (err) {
+    console.error("Translation failed:", err);
+    alert("Translation service currently unavailable.");
+    btn.innerHTML = "A/अ";
+  }
+};
